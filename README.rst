@@ -15,7 +15,7 @@ Below is the file we will use, let's call it deploy.py:
 
   env.install_from_url("http://path/to/dependency.tgz")
   env.install_from_git("git://some/url/to/package")
-  env.install_from_http("/path/to/package")
+  env.install_from_dir("/path/to/package")
 
 And that's it!
 
