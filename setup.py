@@ -18,6 +18,6 @@ setup(name="pydeploy",
       author_email="vmalloc@gmail.com",
       version=VERSION,
       packages=find_packages(exclude=["tests"]),
-      install_requires=["virtualenv"],
+      install_requires=["virtualenv", "pip"],
       scripts=["scripts/pydeploy"],
       )

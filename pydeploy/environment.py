@@ -32,6 +32,12 @@ class Environment(object):
         self.install_from_dir(checkout_path)
     def install_from_dir(self, path):
         self._run_local_python(["setup.py", "install"], cwd=path)
+    def install_from_url(self, url):
+        self.install_using_pip(url)
+    def install_using_pip(self, *args):
+        argv = [os.path.join(self.get_bin_dir(), "pip"), "install"]
+        argv.extend(args)
+        execute_assert_success(argv)
     def _run_local_python(self, argv, cwd):
         cmd = list(argv)
         cmd.insert(0, self._get_python_executable())
