@@ -1,5 +1,7 @@
 import os
 import subprocess
+from urlparse import urlparse
+from urllib2 import urlopen
 from virtualenv import create_environment
 from .utils import execute_assert_success
 from .checkout_cache import CheckoutCache
@@ -17,10 +19,21 @@ class Environment(object):
     def _activate(self):
         activate_script_path = os.path.join(self._path, "bin", "activate_this.py")
         execfile(activate_script_path, dict(__file__ = activate_script_path))
+    def execute_deployment_file(self, path_or_url):
+        if self._is_url(path_or_url):
+            self.execute_deployment_file_url(path_or_url)
+        else:
+            self.execute_deployment_file_path(path_or_url)
+    def _is_url(self, path_or_url):
+        return bool(urlparse(path_or_url).scheme)
+    def execute_deployment_file_url(self, url):
+        self.execute_deployment_file_object(urlopen(url))
     def execute_deployment_file_path(self, path):
-        executed_locals = dict(__file__ = path, env=self)
-        with open(path, "rb") as input_file:
-            exec input_file.read() in executed_locals
+        with open(path, "rb") as fileobj:
+            self.execute_deployment_file_object(fileobj)
+    def execute_deployment_file_object(self, fileobj):
+        executed_locals = dict(env=self)
+        exec fileobj.read() in executed_locals
     def _get_python_executable(self):
         return os.path.join(self.get_bin_dir(), "python")
     def get_bin_dir(self):

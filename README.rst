@@ -24,3 +24,13 @@ Any line we append after the last line above will run in the new environment (pa
 
   env.execute_script("my_script", "arg1", "arg2")
   env.execute_script_assert_success("my_script")
+
+To run our config file, we simply execute:
+::
+
+  pydeploy /path/to/deploy.py
+
+You can even serve the file through http:
+::
+
+  pydeploy http://my_server.com/path/to/deploy.py
