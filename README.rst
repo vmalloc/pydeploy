@@ -4,7 +4,7 @@ pydeploy is a lightweight utility for bootstrapping and deploying *virtualenv* e
 
 pydeploy utilizes *virtualenv* as the backend for creating the python installation.
 
-Currently pydeploy supports installing from either *git*, *url*, or *local directlry*.
+Currently pydeploy supports installing from either *git*, *url*, or *local directory*.
 
 Getting Started
 ===============
