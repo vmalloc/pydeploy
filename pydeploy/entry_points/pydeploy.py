@@ -4,7 +4,7 @@ from pydeploy.environment import Environment
 
 parser = argparse.ArgumentParser()
 parser.add_argument("deployment_file")
-parser.add_argument("--dir", "-d", default=".")
+parser.add_argument("dir")
 
 def main():
     args = parser.parse_args()

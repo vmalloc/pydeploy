@@ -28,9 +28,42 @@ Any line we append after the last line above will run in the new environment (pa
 To run our config file, we simply execute:
 ::
 
-  pydeploy /path/to/deploy.py
+  pydeploy /path/to/deploy.py ./deployment
 
 You can even serve the file through http:
 ::
 
   pydeploy http://my_server.com/path/to/deploy.py
+
+Documentation
+=============
+
+Initializing the Environment
+----------------------------
+Normally the deployment environment is initialized for you, but you can also initialize it yourself:
+::
+
+  from pydeploy.environment import Environment
+  env = Environment('your/path')
+  env.create_and_activate()
+
+Installing Packages
+-------------------
+::
+
+  # from a directory with setup.py in it
+  env.install_from_dir("/path/to/dir")
+  # pass blindly to pip
+  env.install_using_pip("pydeploy>=0.0.1")
+  # URL of a compressed package, with setup.py inside
+  env.install_from_url("http://some.url.com/package.tgz")
+  # install using git
+  env.install_from_git("git://some.git.repo/package.git")
+
+  # checkout from git, then do stuff before installing
+  path = env.checkout_from_git("git://some.git.repo/package.git")
+  _modify_files_as_you_want(path)
+  env.install_from_dir(path)
+  
+
+

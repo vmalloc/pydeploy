@@ -32,17 +32,26 @@ class Environment(object):
         with open(path, "rb") as fileobj:
             self.execute_deployment_file_object(fileobj)
     def execute_deployment_file_object(self, fileobj):
-        executed_locals = dict(env=self)
+        executed_locals = self._get_config_file_locals()
         exec fileobj.read() in executed_locals
+    def _get_config_file_locals(self):
+        returned = dict(
+            env = self,
+            )
+        for module_name in ['sys', 'os']:
+            returned[module_name] = __import__(module_name)
+        return returned
     def _get_python_executable(self):
         return os.path.join(self.get_bin_dir(), "python")
     def get_bin_dir(self):
         return os.path.join(self._path, "bin")
     #installation
     def install_from_git(self, repo_url):
+        self.install_from_dir(self.checkout_from_git(repo_url))
+    def checkout_from_git(self, repo_url):
         checkout_path = self._checkout_cache.get_checkout_path(repo_url)
         git_clone_to_or_update(repo_url, checkout_path)
-        self.install_from_dir(checkout_path)
+        return checkout_path
     def install_from_dir(self, path):
         self._run_local_python(["setup.py", "install"], cwd=path)
     def install_from_url(self, url):
