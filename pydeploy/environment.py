@@ -5,14 +5,14 @@ from urllib2 import urlopen
 from virtualenv import create_environment
 from .utils import execute_assert_success
 from .checkout_cache import CheckoutCache
-from .scm.git import clone_to_or_update as git_clone_to_or_update
+from .sources import get_all_sources_dict, Source
 from .exceptions import CommandFailed
 
 class Environment(object):
     def __init__(self, path):
         super(Environment, self).__init__()
         self._path = os.path.abspath(path)
-        self._checkout_cache = CheckoutCache(self._path)
+        self.checkout_cache = CheckoutCache(self._path)
     def create_and_activate(self):
         create_environment(self._path)
         self._activate()
@@ -38,6 +38,9 @@ class Environment(object):
         returned = dict(
             env = self,
             )
+        returned.update(get_all_sources_dict())
+        import pdb
+        pdb.set_trace()
         for module_name in ['sys', 'os']:
             returned[module_name] = __import__(module_name)
         return returned
@@ -46,20 +49,15 @@ class Environment(object):
     def get_bin_dir(self):
         return os.path.join(self._path, "bin")
     #installation
-    def install_from_git(self, repo_url):
-        self.install_from_dir(self.checkout_from_git(repo_url))
-    def checkout_from_git(self, repo_url):
-        checkout_path = self._checkout_cache.get_checkout_path(repo_url)
-        git_clone_to_or_update(repo_url, checkout_path)
-        return checkout_path
-    def install_from_dir(self, path):
-        self._run_local_python(["setup.py", "install"], cwd=path)
-    def install_from_url(self, url):
-        self.install_using_pip(url)
-    def install_using_pip(self, *args):
-        argv = [os.path.join(self.get_bin_dir(), "pip"), "install"]
-        argv.extend(args)
-        execute_assert_success(argv)
+    def install(self, source):
+        source = self._make_source_object(source)
+        source.install(self)
+    def _make_source_object(self, source):
+        if isinstance(source, basestring) and os.path.exists(source):
+            source = Path(source)
+        if not isinstance(source, Source):
+            source = PIP(source)
+        return source
     def _run_local_python(self, argv, cwd):
         cmd = list(argv)
         cmd.insert(0, self._get_python_executable())
