@@ -11,35 +11,35 @@ class Source(object):
         raise NotImplementedError()
     def install(self, env):
         raise NotImplementedError()
+    def get_signature(self):
+        raise NotImplementedError()
+
+class SignedSingleParam(Source):
+    def __init__(self, param):
+        super(SignedSingleParam, self).__init__()
+        self._param = param
+    def get_signature(self):
+        return "{0}({1})".format(type(self).__name__, self._param)
 
 @_exposed
-class Git(Source):
-    def __init__(self, url):
-        super(Git, self).__init__()
-        self._url = url
+class Git(SignedSingleParam):
     def install(self, env):
         checkout_path = self.checkout(env)
         env.install(checkout_path)
     def checkout(self, env):
-        path = env.checkout_cache.get_checkout_path(self._url)
-        git_clone_to_or_update(self._url, path)
+        path = env.checkout_cache.get_checkout_path(self._param)
+        git_clone_to_or_update(self._param, path)
         return path
 
 @_exposed
-class Path(Source):
-    def __init__(self, path):
-        super(Path, self).__init__()
-        self._path = path
+class Path(SignedSingleParam):
     def install(self, env):
-        env._run_local_python(["setup.py", "install"], cwd=self._path)
+        env._run_local_python(["setup.py", "install"], cwd=self._param)
 
 @_exposed
-class PIP(Source):
-    def __init__(self, name):
-        super(PIP, self).__init__()
-        self._name = name
+class PIP(SignedSingleParam):
     def install(self, env):
-        env.execute_script_assert_success("pip", "install", self._name)
+        env.execute_script_assert_success("pip", "install", self._param)
 
 @_exposed
 class URL(PIP):

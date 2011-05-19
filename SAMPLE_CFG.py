@@ -17,6 +17,14 @@ env.install(path)
 # but of course you can also use the explicit path
 env.install(source=Path(path))
 
+# previous install strategies --
+# * don't reinstall
+#   (nothing happens here)
+env.install(source=SCM("git://github.com/vmalloc/capacity.git"), reinstall=False)
+# * install always (default)
+#   (but now it will be reinstalled)
+env.install(source=SCM("git://github.com/vmalloc/capacity.git"), reinstall=True)
+
 import capacity
 import functors
 import forge

@@ -1,3 +1,4 @@
+import cPickle as pickle
 import os
 import subprocess
 from urlparse import urlparse
@@ -20,6 +21,7 @@ class Environment(object):
         self.checkout_cache = CheckoutCache(self._path)
     def create_and_activate(self):
         create_environment(self._path)
+        self._try_load_installed_signatures()
         self._activate()
     def _activate(self):
         activate_script_path = os.path.join(self._path, "bin", "activate_this.py")
@@ -52,9 +54,13 @@ class Environment(object):
     def get_bin_dir(self):
         return os.path.join(self._path, "bin")
     #installation
-    def install(self, source):
+    def install(self, source, reinstall=True):
         source = self._make_source_object(source)
-        return source.install(self)
+        if not self._is_already_installed(source) or reinstall:
+            print "INSTALLING!!!"
+            returned = source.install(self)
+            self._mark_installed(source)
+            return returned
     def checkout(self, source):
         source = self._make_source_object(source)
         return source.checkout(self)
@@ -68,6 +74,29 @@ class Environment(object):
         cmd = list(argv)
         cmd.insert(0, self._get_python_executable())
         execute_assert_success(cmd, shell=False, cwd=cwd)
+    #signatures
+    def _is_already_installed(self, source):
+        return source.get_signature() in self._installed
+    def _mark_installed(self, source):
+        self._installed.append(source.get_signature())
+        self._saved_installed_signatures()
+    def _saved_installed_signatures(self):
+        with open(self._get_temporary_installed_signatures_filename(), "wb") as f:
+            pickle.dump(self._installed, f)
+        os.rename(self._get_temporary_installed_signatures_filename(),
+                  self._get_installed_signatures_filename())
+    def _try_load_installed_signatures(self):
+        try:
+            self._load_installed_signatures()
+        except IOError:
+            self._installed = []
+    def _load_installed_signatures(self):
+        with open(self._get_installed_signatures_filename(), "rb") as f:
+            self._installed = pickle.load(f)
+    def _get_installed_signatures_filename(self):
+        return os.path.join(self._path, ".installed_signatures")
+    def _get_temporary_installed_signatures_filename(self):
+        return self._get_installed_signatures_filename() + ".tmp"
     #execution
     def execute_script(self, script, *args, **kwargs):
         argv = [self._get_python_executable(), os.path.join(self.get_bin_dir(), script)]
