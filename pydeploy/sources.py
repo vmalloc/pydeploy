@@ -23,6 +23,7 @@ class Git(Source):
     def checkout(self, env):
         path = env.checkout_cache.get_checkout_path(self._url)
         git_clone_to_or_update(self._url, path)
+        return path
 
 @_exposed
 class Path(Source):

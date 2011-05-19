@@ -5,7 +5,12 @@ from urllib2 import urlopen
 from virtualenv import create_environment
 from .utils import execute_assert_success
 from .checkout_cache import CheckoutCache
-from .sources import get_all_sources_dict, Source
+from .sources import (
+    get_all_sources_dict,
+    PIP,
+    Path,
+    Source
+    )
 from .exceptions import CommandFailed
 
 class Environment(object):
@@ -39,8 +44,6 @@ class Environment(object):
             env = self,
             )
         returned.update(get_all_sources_dict())
-        import pdb
-        pdb.set_trace()
         for module_name in ['sys', 'os']:
             returned[module_name] = __import__(module_name)
         return returned
@@ -51,7 +54,10 @@ class Environment(object):
     #installation
     def install(self, source):
         source = self._make_source_object(source)
-        source.install(self)
+        return source.install(self)
+    def checkout(self, source):
+        source = self._make_source_object(source)
+        return source.checkout(self)
     def _make_source_object(self, source):
         if isinstance(source, basestring) and os.path.exists(source):
             source = Path(source)
@@ -63,12 +69,12 @@ class Environment(object):
         cmd.insert(0, self._get_python_executable())
         execute_assert_success(cmd, shell=False, cwd=cwd)
     #execution
-    def execute_script(self, script, *args):
+    def execute_script(self, script, *args, **kwargs):
         argv = [self._get_python_executable(), os.path.join(self.get_bin_dir(), script)]
         argv.extend(args)
-        return subprocess.call(argv, close_fds=True)
-    def execute_script_assert_success(self, *args):
-        returned = self.execute_script(*args)
+        return subprocess.call(argv, **kwargs)
+    def execute_script_assert_success(self, *args, **kwargs):
+        returned = self.execute_script(*args, **kwargs)
         if returned != 0:
             raise CommandFailed()
         return returned
