@@ -20,7 +20,7 @@ def main():
     _import_or_fetch('argparse',
                      'http://argparse.googlecode.com/files/argparse-1.2.1.tar.gz#md5=2fbef8cb61e506c706957ab6e135840c')
     _import_or_fetch('pydeploy',
-                     "http://pypi.python.org/packages/source/p/pydeploy/pydeploy-0.0.2.tar.gz#md5=501fe51a3d24ff8ac2ea2680a4d1cf18")
+                     "http://pypi.python.org/packages/source/p/pydeploy/pydeploy-0.0.3.tar.gz")
     return _exec_pydeploy()
 
 def _import_or_fetch(module_name, package_url):
@@ -39,9 +39,12 @@ def _fetch_and_install(url):
     _ensure_dir(_PACKAGE_DIR)
     package_path = os.path.join(_PACKAGE_DIR, package_name)
     package_hash = urlinfo.fragment
-    if not package_hash.startswith("md5="):
-        raise ValueError("Unknown hash for {0}".format(url))
-    package_hash = package_hash[4:]
+    if package_hash:
+        if not package_hash.startswith("md5="):
+            raise ValueError("Unknown hash for {0}".format(url))
+        package_hash = package_hash[4:]
+    else:
+        package_hash = None
     if not os.path.exists(package_path) or not _md5_matches(package_path, package_hash):
         log("Downloading {0}...", package_name)
         with open(package_path, "wb") as package:
@@ -52,6 +55,8 @@ def _fetch_and_install(url):
     return package_path
 
 def _md5_matches(filename, hash):
+    if hash is None:
+        return True
     with open(filename, "rb") as infile:
         h = hashlib.md5(infile.read())
     return hash == h.hexdigest()
