@@ -9,16 +9,18 @@ import subprocess
 import sys
 import tarfile
 
-_VIRTUALENV_URL = "http://pypi.python.org/packages/source/v/virtualenv/virtualenv-1.6.1.tar.gz#md5=1a475df2219457b6b4febb9fe595d915"
-_PYDEPLOY_URL = "http://pypi.python.org/packages/source/p/pydeploy/pydeploy-0.0.1.tar.gz#md5=ca786dc86788171fee6b1e25b3d4e346"
-_PIP_URL = "http://pypi.python.org/packages/source/p/pip/pip-1.0.1.tar.gz#md5=28dcc70225e5bf925532abc5b087a94b"
 _BOOTSTRAPPER_DIR = os.path.expanduser("~/.pydeploy")
 _PACKAGE_DIR = os.path.join(_BOOTSTRAPPER_DIR, "packages")
 
 def main():
-    _import_or_fetch('virtualenv', _VIRTUALENV_URL)
-    _import_or_fetch('pip', _PIP_URL)
-    _import_or_fetch('pydeploy', _PYDEPLOY_URL)
+    _import_or_fetch('virtualenv',
+                     "http://pypi.python.org/packages/source/v/virtualenv/virtualenv-1.6.1.tar.gz#md5=1a475df2219457b6b4febb9fe595d915")
+    _import_or_fetch('pip',
+                     "http://pypi.python.org/packages/source/p/pip/pip-1.0.1.tar.gz#md5=28dcc70225e5bf925532abc5b087a94b")
+    _import_or_fetch('argparse',
+                     'http://argparse.googlecode.com/files/argparse-1.2.1.tar.gz#md5=2fbef8cb61e506c706957ab6e135840c')
+    _import_or_fetch('pydeploy',
+                     "http://pypi.python.org/packages/source/p/pydeploy/pydeploy-0.0.1.tar.gz#md5=ca786dc86788171fee6b1e25b3d4e346")
     return _exec_pydeploy()
 
 def _import_or_fetch(module_name, package_url):

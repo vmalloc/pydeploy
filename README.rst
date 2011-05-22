@@ -35,6 +35,13 @@ You can even serve the file through http:
 
   pydeploy http://my_server.com/path/to/deploy.py
 
+On hosts that don't have pydeploy installed (and perhaps installation is an issue due to permissions), a bootstrapper is available online:
+::
+
+  curl https://github.com/vmalloc/pydeploy/raw/master/scripts/bootstrapper.py | python - <args>
+
+Where *<args>* is the arguments passed to the pydeploy front-end.
+  
 Documentation
 =============
 
