@@ -13,9 +13,9 @@ pydeploy relies on *definition files* to control the setup. Let's assume we have
 Below is the file we will use, let's call it deploy.py:
 ::
 
-  env.install_from_url("http://path/to/dependency.tgz")
-  env.install_from_git("git://some/url/to/package")
-  env.install_from_dir("/path/to/package")
+  env.install(URL("http://path/to/dependency.tgz"))
+  env.install(SCM("git://some/url/to/package"))
+  env.install("/path/to/package")
 
 And that's it!
 
@@ -56,21 +56,22 @@ Normally the deployment environment is initialized for you, but you can also ini
 
 Installing Packages
 -------------------
+Installing is done via the *.install()* method of the environment class, receiving the source object and an optional *reinstall* argument.
+
+*Source* can be any of:
+
+* Path (default): local path to the package
+* PIP (default if the argument is not a path): install using pip
+* SCM: for installing from source repository
+* URL: for installing from the web
+
+*reinstall* controls what happens if the directory is already installed. By default, it is true, so the packages get re-fetched (and thus possibly upgraded) on each deployment. For some sources (like pip) this can be very quick nevertheless, because detection is done to check if the version is satisfied.
+
+Checking Out
+------------
+For some sources, you can perform a *checkout*, that is, fetching the package but not installing it, and returning the local path in which it is stored:
 ::
 
-  # from a directory with setup.py in it
-  env.install_from_dir("/path/to/dir")
-  # pass blindly to pip
-  env.install_using_pip("pydeploy>=0.0.1")
-  # URL of a compressed package, with setup.py inside
-  env.install_from_url("http://some.url.com/package.tgz")
-  # install using git
-  env.install_from_git("git://some.git.repo/package.git")
-
-  # checkout from git, then do stuff before installing
-  path = env.checkout_from_git("git://some.git.repo/package.git")
-  _modify_files_as_you_want(path)
-  env.install_from_dir(path)
-  
+  path_to_package = env.checkout(SCM('git://some.git.repo/repo'))
 
 
