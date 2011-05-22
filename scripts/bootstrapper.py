@@ -71,15 +71,6 @@ def _install(package_path):
     package_path = _get_setup_py_directory(package_path)
     sys.path.insert(0, package_path)
 
-@contextmanager
-def _pushd(d):
-    prev = os.path.abspath(".")
-    os.chdir(d)
-    try:
-        yield
-    finally:
-        os.chdir(prev)
-
 def _get_setup_py_directory(d):
     for dirname, dirnames, filenames in os.walk(d):
         if 'setup.py' in filenames:
