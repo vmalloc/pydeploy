@@ -75,3 +75,17 @@ For some sources, you can perform a *checkout*, that is, fetching the package bu
   path_to_package = env.checkout(SCM('git://some.git.repo/repo'))
 
 
+Executing Scripts and Functions
+-------------------------------
+Execution is done via *execute_script* and *execute_script_assert_success*, above.
+
+
+Argument Passing
+================
+It is also possible for your deployment file to run a python functions before it finishes. pydeploy consumes arguments from the command line, so getting the 'clean' argv list can be done by the get_argv() method:
+::
+
+  import argparse
+  my_parser = argparse.ArgumentParser(...)
+  args = my_parser.parse_args(env.get_argv())
+

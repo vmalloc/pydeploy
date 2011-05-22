@@ -7,8 +7,8 @@ parser.add_argument("deployment_file")
 parser.add_argument("dir")
 
 def main():
-    args = parser.parse_args()
-    env = Environment(args.dir)
+    args, remainder_argv = parser.parse_known_args()
+    env = Environment(args.dir, remainder_argv)
     env.create_and_activate()
     env.execute_deployment_file(args.deployment_file)
     return 0

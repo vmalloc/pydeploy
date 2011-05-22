@@ -28,3 +28,5 @@ env.install(source=SCM("git://github.com/vmalloc/capacity.git"), reinstall=True)
 import capacity
 import functors
 import forge
+
+print "GOT ARGV:", env.get_argv()

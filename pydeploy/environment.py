@@ -1,6 +1,7 @@
 import cPickle as pickle
 import os
 import subprocess
+from contextlib import contextmanager
 from urlparse import urlparse
 from urllib2 import urlopen
 from virtualenv import create_environment
@@ -15,10 +16,13 @@ from .sources import (
 from .exceptions import CommandFailed
 
 class Environment(object):
-    def __init__(self, path):
+    def __init__(self, path, argv):
         super(Environment, self).__init__()
         self._path = os.path.abspath(path)
+        self._argv = argv
         self.checkout_cache = CheckoutCache(self._path)
+    def get_argv(self):
+        return list(self._argv)
     def create_and_activate(self):
         create_environment(self._path)
         self._try_load_installed_signatures()
@@ -37,7 +41,16 @@ class Environment(object):
         self.execute_deployment_file_object(urlopen(url))
     def execute_deployment_file_path(self, path):
         with open(path, "rb") as fileobj:
-            self.execute_deployment_file_object(fileobj)
+            with self._filename_as_argv0(path):
+                self.execute_deployment_file_object(fileobj)
+    @contextmanager
+    def _filename_as_argv0(self, path):
+        old_argv = self.get_argv()
+        try:
+            self._argv.insert(0, path)
+            yield
+        finally:
+            self._argv = old_argv
     def execute_deployment_file_object(self, fileobj):
         executed_locals = self._get_config_file_locals()
         exec fileobj.read() in executed_locals
@@ -59,6 +72,7 @@ class Environment(object):
         if not self._is_already_installed(source) or reinstall:
             returned = source.install(self)
             self._mark_installed(source)
+            self._activate()
             return returned
     def checkout(self, source):
         source = self._make_source_object(source)
