@@ -57,7 +57,6 @@ class Environment(object):
     def install(self, source, reinstall=True):
         source = self._make_source_object(source)
         if not self._is_already_installed(source) or reinstall:
-            print "INSTALLING!!!"
             returned = source.install(self)
             self._mark_installed(source)
             return returned
