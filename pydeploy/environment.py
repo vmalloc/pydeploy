@@ -9,7 +9,7 @@ from .utils import execute_assert_success
 from .checkout_cache import CheckoutCache
 from .sources import (
     get_all_sources_dict,
-    PIP,
+    EasyInstall,
     Path,
     Source
     )
@@ -42,7 +42,7 @@ class Environment(object):
     def execute_deployment_file_path(self, path):
         with open(path, "rb") as fileobj:
             with self._filename_as_argv0(path):
-                self.execute_deployment_file_object(fileobj)
+                self.execute_deployment_file_object(fileobj, filename=path)
     @contextmanager
     def _filename_as_argv0(self, path):
         old_argv = self.get_argv()
@@ -51,13 +51,15 @@ class Environment(object):
             yield
         finally:
             self._argv = old_argv
-    def execute_deployment_file_object(self, fileobj):
-        executed_locals = self._get_config_file_locals()
+    def execute_deployment_file_object(self, fileobj, filename=None):
+        executed_locals = self._get_config_file_locals(filename)
         exec fileobj.read() in executed_locals
-    def _get_config_file_locals(self):
+    def _get_config_file_locals(self, filename):
         returned = dict(
             env = self,
             )
+        if filename is not None:
+            returned.update(__file__=filename)
         returned.update(get_all_sources_dict())
         for module_name in ['sys', 'os']:
             returned[module_name] = __import__(module_name)
@@ -81,7 +83,7 @@ class Environment(object):
         if isinstance(source, basestring) and os.path.exists(source):
             source = Path(source)
         if not isinstance(source, Source):
-            source = PIP(source)
+            source = EasyInstall(source)
         return source
     def _run_local_python(self, argv, cwd):
         cmd = list(argv)

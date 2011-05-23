@@ -61,7 +61,8 @@ Installing is done via the *.install()* method of the environment class, receivi
 *Source* can be any of:
 
 * Path (default): local path to the package
-* PIP (default if the argument is not a path): install using pip
+* EasyInstall (default if argument is not a path): for installing using easy_install
+* PIP: install using pip
 * SCM: for installing from source repository
 * URL: for installing from the web
 
@@ -89,3 +90,6 @@ It is also possible for your deployment file to run a python functions before it
   my_parser = argparse.ArgumentParser(...)
   args = my_parser.parse_args(env.get_argv())
 
+Known Issues
+------------
+* When using PIP to install a library that exists on the host, pip will not perform an actual installation. This means, for instance, that scripts will not be copied to the bin dir of the virtual environment. In such cases EasyInstall is recommended.

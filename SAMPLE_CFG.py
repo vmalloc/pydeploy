@@ -3,8 +3,11 @@ env.install(source=SCM("git://github.com/vmalloc/capacity.git"))
 
 # pass blindly to pip
 env.install(source=PIP("fs"))
+
+# pass blindly to easy_install
+env.install(source=EasyInstall("psutil"))
 # ...which is also the default
-env.install("fs")
+env.install("psutil")
 
 # URL of a compressed package, with setup.py inside
 env.install(source=URL("https://github.com/vmalloc/pyforge/tarball/master"))

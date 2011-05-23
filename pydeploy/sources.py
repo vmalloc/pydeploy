@@ -40,6 +40,10 @@ class Path(SignedSingleParam):
 class PIP(SignedSingleParam):
     def install(self, env):
         env.execute_script_assert_success("pip", "install", self._param)
+@_exposed
+class EasyInstall(SignedSingleParam):
+    def install(self, env):
+        env.execute_script_assert_success("easy_install", self._param)
 
 @_exposed
 class URL(PIP):
