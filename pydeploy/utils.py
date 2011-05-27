@@ -15,7 +15,9 @@ def execute(*args, **kwargs):
 
 def _execute(cmd, cwd=None, shell=True):
     _logger.debug("Running %r", cmd if isinstance(cmd, basestring) else " ".join(cmd))
-    p = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=shell)
+    p = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE, shell=shell, close_fds=True)
+    p.stdin.close()
+    _logger.debug("pid: %r", p.pid)
     output = p.stdout.read()
     _logger.debug("Got Output:\n%s", output)
     result = p.wait()
