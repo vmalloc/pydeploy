@@ -19,7 +19,10 @@ def main():
     env = Environment(args.dir, remainder_argv)
     env.create_and_activate()
     try:
-        env.execute_deployment_file(args.deployment_file)
+        if args.deployment_file == '-':
+            env.execute_deployment_stdin()
+        else:
+            env.execute_deployment_file(args.deployment_file)
     except Exception, e:
         _display_error(e, sys.exc_info()[-1])
         if args.pdb:

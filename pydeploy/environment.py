@@ -1,5 +1,6 @@
 import cPickle as pickle
 import os
+import sys
 import logging
 import subprocess
 from contextlib import contextmanager
@@ -49,6 +50,9 @@ class Environment(object):
         with open(path, "rb") as fileobj:
             with self._filename_as_argv0(path):
                 self.execute_deployment_file_object(fileobj, filename=path)
+    def execute_deployment_stdin(self):
+        _logger.info("Executing deployment script from standard input...")
+        self.execute_deployment_file_object(sys.stdin, filename="<stdin>")
     @contextmanager
     def _filename_as_argv0(self, path):
         old_argv = self.get_argv()
