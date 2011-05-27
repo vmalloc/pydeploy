@@ -1,9 +1,9 @@
-
 import os
 import itertools
 from setuptools import setup, find_packages
 
-from pydeploy import __version__ as VERSION
+with open(os.path.join(os.path.dirname(__file__), "pydeploy", "__version__.py")) as version_file:
+    exec version_file.read()
 
 setup(name="pydeploy",
       classifiers = [
@@ -16,7 +16,7 @@ setup(name="pydeploy",
       license="BSD",
       author="Rotem Yaari",
       author_email="vmalloc@gmail.com",
-      version=VERSION,
+      version=__version__,
       packages=find_packages(exclude=["tests"]),
       install_requires=["virtualenv", "pip"],
       scripts=["scripts/pydeploy"],
