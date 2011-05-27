@@ -90,6 +90,26 @@ It is also possible for your deployment file to run a python functions before it
   my_parser = argparse.ArgumentParser(...)
   args = my_parser.parse_args(env.get_argv())
 
+
+Advanced
+--------
+
+Automatic Remote Deployment
+===========================
+The *pydeploy.remote* utility module provides a manner for deploying a script remotely.
+
+The base utility function is *get_deployment_command_and_stdin*:
+::
+
+  from pydeploy.remote import get_deployment_command_and_stdin
+  command, stdin = get_deployment_command_and_stdin("print 'deployed!'", "/tmp/directory")
+
+If you intend to use the host's *ssh* utility to do that on a remote host, there's an even better way:
+::
+
+  from pydeploy.remote import deploy_via_ssh
+  return_code = deploy_via_ssh("hostname", "print 'deployed!'", "/tmp/deployment_dir")
+  
 Known Issues
 ------------
 * When using PIP to install a library that exists on the host, pip will not perform an actual installation. This means, for instance, that scripts will not be copied to the bin dir of the virtual environment. In such cases EasyInstall is recommended.

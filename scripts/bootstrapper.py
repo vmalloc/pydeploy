@@ -20,7 +20,7 @@ def main():
     _import_or_fetch('argparse',
                      'http://argparse.googlecode.com/files/argparse-1.2.1.tar.gz#md5=2fbef8cb61e506c706957ab6e135840c')
     _import_or_fetch('pydeploy',
-                     "http://pypi.python.org/packages/source/p/pydeploy/pydeploy-0.0.3.tar.gz")
+                     "http://pypi.python.org/packages/source/p/pydeploy/pydeploy-0.0.4.tar.gz")
     return _exec_pydeploy()
 
 def _import_or_fetch(module_name, package_url):
