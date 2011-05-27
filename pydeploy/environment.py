@@ -1,10 +1,12 @@
 import cPickle as pickle
 import os
+import logging
 import subprocess
 from contextlib import contextmanager
 from urlparse import urlparse
 from urllib2 import urlopen
 from virtualenv import create_environment
+from .utils import execute
 from .utils import execute_assert_success
 from .checkout_cache import CheckoutCache
 from .sources import (
@@ -14,6 +16,8 @@ from .sources import (
     Source
     )
 from .exceptions import CommandFailed
+
+_logger = logging.getLogger("pydeploy.env")
 
 class Environment(object):
     def __init__(self, path, argv):
@@ -38,8 +42,10 @@ class Environment(object):
     def _is_url(self, path_or_url):
         return bool(urlparse(path_or_url).scheme)
     def execute_deployment_file_url(self, url):
+        _logger.info("Executing deployment file from url %r...", url)
         self.execute_deployment_file_object(urlopen(url))
     def execute_deployment_file_path(self, path):
+        _logger.info("Executing deployment file %r...", path)
         with open(path, "rb") as fileobj:
             with self._filename_as_argv0(path):
                 self.execute_deployment_file_object(fileobj, filename=path)
@@ -71,12 +77,15 @@ class Environment(object):
     #installation
     def install(self, source, reinstall=True):
         source = self._make_source_object(source)
+        _logger.info("Installing %r (%s)", source.get_name(), type(source).__name__)
         if not self._is_already_installed(source) or reinstall:
             returned = source.install(self)
             self._mark_installed(source)
             self._activate()
             return returned
     def checkout(self, source):
+        source = self._make_source_object(source)
+        _logger.info("Checking out %r (%s)", source.get_name(), type(source).__name__)
         source = self._make_source_object(source)
         return source.checkout(self)
     def _make_source_object(self, source):
@@ -113,12 +122,11 @@ class Environment(object):
     def _get_temporary_installed_signatures_filename(self):
         return self._get_installed_signatures_filename() + ".tmp"
     #execution
-    def execute_script(self, script, *args, **kwargs):
+    def execute_script(self, *args, **kwargs):
+        return execute(self._get_script_command_line(*args))
+    def execute_script_assert_success(self, *args, **kwargs):
+        return execute_assert_success(self._get_script_command_line(*args), **kwargs)
+    def _get_script_command_line(self, script, *args):
         argv = [self._get_python_executable(), os.path.join(self.get_bin_dir(), script)]
         argv.extend(args)
-        return subprocess.call(argv, **kwargs)
-    def execute_script_assert_success(self, *args, **kwargs):
-        returned = self.execute_script(*args, **kwargs)
-        if returned != 0:
-            raise CommandFailed()
-        return returned
+        return argv

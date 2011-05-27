@@ -1,6 +1,8 @@
+import logging
 from .scm.git import clone_to_or_update as git_clone_to_or_update
 
 _all_exposed_sources = {}
+_logger = logging.getLogger("pydeploy.sources")
 
 def _exposed(thing):
     _all_exposed_sources[thing.__name__] = thing
@@ -13,19 +15,25 @@ class Source(object):
         raise NotImplementedError()
     def get_signature(self):
         raise NotImplementedError()
+    def get_name(self):
+        raise NotImplementedError()
 
 class SignedSingleParam(Source):
     def __init__(self, param):
         super(SignedSingleParam, self).__init__()
         self._param = param
     def get_signature(self):
+        return repr(self)
+    def get_name(self):
+        return self._param
+    def __repr__(self):
         return "{0}({1})".format(type(self).__name__, self._param)
 
 @_exposed
 class Git(SignedSingleParam):
     def install(self, env):
         checkout_path = self.checkout(env)
-        env.install(checkout_path)
+        Path(checkout_path).install(env)
     def checkout(self, env):
         path = env.checkout_cache.get_checkout_path(self._param)
         git_clone_to_or_update(self._param, path)
