@@ -15,18 +15,21 @@ except ImportError:
 else:
     sys.exit(main())"""
 
-def deploy_via_ssh(hostname, deployment_script, directory):
+def deploy_via_ssh(hostname, deployment_script, directory, args=()):
     command, stdin = get_deployment_command_and_stdin(deployment_script, directory)
-    p = subprocess.Popen(["ssh", hostname, command], stdin=subprocess.PIPE)
+    cmd = ["ssh", hostname, command]
+    cmd.extend(args)
+    p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
     p.stdin.write(stdin)
     return p.wait()
 
 def get_deployment_command_and_stdin(deployment_script, directory):
     lazy_fetcher_length = len(_BOOTSTRAPPER_LAZY_FETCHER)
-    stdin = "{0}\n{1}{2}".format(lazy_fetcher_length, _BOOTSTRAPPER_LAZY_FETCHER, deployment_script)
-    return "python -c '{0}' {1}".format(_BOOTSTRAPPER_BOILERPLATE, directory), stdin
+    stdin = "{0}\n{1}".format(lazy_fetcher_length, _BOOTSTRAPPER_LAZY_FETCHER)
+    if isinstance(deployment_script, basestring):
+        arg = deployment_script
+    else:
+        arg = "-"
+        stdin += deployment_script.read()
+    return "python -c '{0}' {1} {2}".format(_BOOTSTRAPPER_BOILERPLATE, arg, directory), stdin
 
-if __name__ == '__main__':
-    command, stdin = get_deployment_command_and_stdin("print 2", "/tmp/deployment")
-    print command
-    print stdin
