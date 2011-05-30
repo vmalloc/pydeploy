@@ -42,16 +42,16 @@ class Git(SignedSingleParam):
 @_exposed
 class Path(SignedSingleParam):
     def install(self, env):
-        env._run_local_python(["setup.py", "install"], cwd=self._param)
+        env._run_local_python(["setup.py", "install"], cwd=self._param, shell=False)
 
 @_exposed
 class PIP(SignedSingleParam):
     def install(self, env):
-        env.execute_script_assert_success("pip", "install", self._param)
+        env.execute_script_assert_success("pip", "install", self._param, shell=False)
 @_exposed
 class EasyInstall(SignedSingleParam):
     def install(self, env):
-        env.execute_script_assert_success("easy_install", self._param)
+        env.execute_script_assert_success("easy_install", self._param, shell=False)
 
 @_exposed
 class URL(PIP):
