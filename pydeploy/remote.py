@@ -21,6 +21,7 @@ def deploy_via_ssh(hostname, deployment_script, directory, args=()):
     cmd.extend(args)
     p = subprocess.Popen(cmd, stdin=subprocess.PIPE)
     p.stdin.write(stdin)
+    p.stdin.close()
     return p.wait()
 
 def get_deployment_command_and_stdin(deployment_script, directory):
