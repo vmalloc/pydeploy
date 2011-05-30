@@ -20,22 +20,23 @@ def main():
     _import_or_fetch('argparse',
                      'http://argparse.googlecode.com/files/argparse-1.2.1.tar.gz#md5=2fbef8cb61e506c706957ab6e135840c')
     _import_or_fetch('pydeploy',
-                     "http://pypi.python.org/packages/source/p/pydeploy/pydeploy-0.0.6.tar.gz")
+                     "https://github.com/vmalloc/pydeploy/tarball/master", "pydeploy-latest.tar.gz")
     return _exec_pydeploy()
 
-def _import_or_fetch(module_name, package_url):
+def _import_or_fetch(module_name, package_url, package_name=None):
     try:
         __import__(module_name)
     except ImportError:
-        _fetch_and_install(package_url)
+        _fetch_and_install(package_url, package_name=package_name)
         __import__(module_name)
         log("Installed {0}", module_name)
     else:
         log("{0} already installed", module_name)
 
-def _fetch_and_install(url):
+def _fetch_and_install(url, package_name=None):
     urlinfo = urlparse(url)
-    package_name = urlinfo.path.rsplit("/", 1)[-1]
+    if package_name is None:
+        package_name = urlinfo.path.rsplit("/", 1)[-1]
     _ensure_dir(_PACKAGE_DIR)
     package_path = os.path.join(_PACKAGE_DIR, package_name)
     package_hash = urlinfo.fragment
