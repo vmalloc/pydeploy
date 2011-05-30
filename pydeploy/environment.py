@@ -21,7 +21,7 @@ from .exceptions import CommandFailed
 _logger = logging.getLogger("pydeploy.env")
 
 class Environment(object):
-    def __init__(self, path, argv):
+    def __init__(self, path, argv=()):
         super(Environment, self).__init__()
         self._path = os.path.abspath(path)
         self._argv = argv
@@ -32,6 +32,7 @@ class Environment(object):
         create_environment(self._path)
         self._try_load_installed_signatures()
         self._activate()
+        set_active_environment(self)
     def _activate(self):
         activate_script_path = os.path.join(self._path, "bin", "activate_this.py")
         execfile(activate_script_path, dict(__file__ = activate_script_path))
@@ -134,3 +135,15 @@ class Environment(object):
         argv = [self._get_python_executable(), os.path.join(self.get_bin_dir(), script)]
         argv.extend(args)
         return argv
+
+_active_environment = None
+
+def clear_active_environment():
+    set_active_environment(None)
+
+def get_active_envrionment():
+    return _active_environment
+
+def set_active_environment(e):
+    global _active_environment
+    _active_environment = e
