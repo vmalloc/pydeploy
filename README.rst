@@ -17,13 +17,7 @@ Below is the file we will use, let's call it deploy.py:
   env.install(SCM("git://some/url/to/package"))
   env.install("/path/to/package")
 
-And that's it!
-
-Any line we append after the last line above will run in the new environment (paths are modified and all). We can, for instance, run scripts afterwards, using the shortcuts *execute_script* and *execute_script_assert_success*
-::
-
-  env.execute_script("my_script", "arg1", "arg2")
-  env.execute_script_assert_success("my_script")
+And that's it! After the activation, python code executes in the new environment.
 
 To run our config file, we simply execute:
 ::
@@ -78,7 +72,17 @@ For some sources, you can perform a *checkout*, that is, fetching the package bu
 
 Executing Scripts and Functions
 -------------------------------
-Execution is done via *execute_script* and *execute_script_assert_success*, above.
+The pydeploy environment provides more utilities for performing basic tasks:
+
+Run a python script (using our environment's python, of course):
+::
+
+  env.utils.execute_python_script("/path/to/my_script.py arg1 arg2")
+
+This also accepts lists as commands:
+::
+
+  env.utils.execute_python_script(["/path/to/my_script.py", "arg1"])
 
 
 Argument Passing

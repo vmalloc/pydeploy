@@ -5,10 +5,9 @@ import logging
 import subprocess
 from contextlib import contextmanager
 from urlparse import urlparse
-from urllib2 import urlopen
-from virtualenv import create_environment
-from .utils import execute
-from .utils import execute_assert_success
+from . import os_api
+from . import virtualenv_api
+from .environment_utils import EnvironmentUtils
 from .checkout_cache import CheckoutCache
 from .sources import (
     get_all_sources_dict,
@@ -24,18 +23,19 @@ class Environment(object):
     def __init__(self, path, argv=()):
         super(Environment, self).__init__()
         self._path = os.path.abspath(path)
-        self._argv = argv
-        self.checkout_cache = CheckoutCache(self._path)
+        self._argv = list(argv)
+        self._checkout_cache = None
+        self.utils = EnvironmentUtils(self)
     def get_argv(self):
         return list(self._argv)
+    def get_checkout_cache(self):
+        return self._checkout_cache
     def create_and_activate(self):
-        create_environment(self._path)
+        virtualenv_api.create_environment(self._path)
+        self._checkout_cache = CheckoutCache(self._path)
         self._try_load_installed_signatures()
-        self._activate()
+        virtualenv_api.activate_environment(self._path)
         set_active_environment(self)
-    def _activate(self):
-        activate_script_path = os.path.join(self._path, "bin", "activate_this.py")
-        execfile(activate_script_path, dict(__file__ = activate_script_path))
     def execute_deployment_file(self, path_or_url):
         if self._is_url(path_or_url):
             self.execute_deployment_file_url(path_or_url)
@@ -45,7 +45,7 @@ class Environment(object):
         return bool(urlparse(path_or_url).scheme)
     def execute_deployment_file_url(self, url):
         _logger.info("Executing deployment file from url %r...", url)
-        self.execute_deployment_file_object(urlopen(url))
+        self.execute_deployment_file_object(os_api.urlopen(url))
     def execute_deployment_file_path(self, path):
         _logger.info("Executing deployment file %r...", path)
         with open(path, "rb") as fileobj:
@@ -75,8 +75,12 @@ class Environment(object):
         for module_name in ['sys', 'os']:
             returned[module_name] = __import__(module_name)
         return returned
-    def _get_python_executable(self):
+    def get_easy_install_executable(self):
+        return os.path.join(self.get_bin_dir(), "easy_install")
+    def get_python_executable(self):
         return os.path.join(self.get_bin_dir(), "python")
+    def get_pip_executable(self):
+        return os.path.join(self.get_bin_dir(), "pip")
     def get_bin_dir(self):
         return os.path.join(self._path, "bin")
     #installation
@@ -85,8 +89,8 @@ class Environment(object):
         _logger.info("Installing %r (%s)", source.get_name(), type(source).__name__)
         if not self._is_already_installed(source) or reinstall:
             returned = source.install(self)
+            virtualenv_api.activate_environment(self._path)
             self._mark_installed(source)
-            self._activate()
             return returned
     def checkout(self, source):
         source = self._make_source_object(source)
@@ -99,10 +103,6 @@ class Environment(object):
         if not isinstance(source, Source):
             source = EasyInstall(source)
         return source
-    def _run_local_python(self, argv, cwd):
-        cmd = list(argv)
-        cmd.insert(0, self._get_python_executable())
-        execute_assert_success(cmd, shell=False, cwd=cwd)
     #signatures
     def _is_already_installed(self, source):
         return source.get_signature() in self._installed
@@ -126,15 +126,6 @@ class Environment(object):
         return os.path.join(self._path, ".installed_signatures")
     def _get_temporary_installed_signatures_filename(self):
         return self._get_installed_signatures_filename() + ".tmp"
-    #execution
-    def execute_script(self, *args, **kwargs):
-        return execute(self._get_script_command_line(*args))
-    def execute_script_assert_success(self, *args, **kwargs):
-        return execute_assert_success(self._get_script_command_line(*args), **kwargs)
-    def _get_script_command_line(self, script, *args):
-        argv = [self._get_python_executable(), os.path.join(self.get_bin_dir(), script)]
-        argv.extend(args)
-        return argv
 
 _active_environment = None
 

@@ -1,5 +1,6 @@
 import logging
-from .scm.git import clone_to_or_update as git_clone_to_or_update
+from .scm import git
+from . import command
 
 _all_exposed_sources = {}
 _logger = logging.getLogger("pydeploy.sources")
@@ -10,13 +11,13 @@ def _exposed(thing):
 
 class Source(object):
     def checkout(self, env):
-        raise NotImplementedError()
+        raise NotImplementedError() # pragma: no cover
     def install(self, env):
-        raise NotImplementedError()
+        raise NotImplementedError() # pragma: no cover
     def get_signature(self):
-        raise NotImplementedError()
+        raise NotImplementedError() # pragma: no cover
     def get_name(self):
-        raise NotImplementedError()
+        raise NotImplementedError() # pragma: no cover
 
 class SignedSingleParam(Source):
     def __init__(self, param):
@@ -35,23 +36,25 @@ class Git(SignedSingleParam):
         checkout_path = self.checkout(env)
         Path(checkout_path).install(env)
     def checkout(self, env):
-        path = env.checkout_cache.get_checkout_path(self._param)
-        git_clone_to_or_update(self._param, path)
+        path = env.get_checkout_cache().get_checkout_path(self._param)
+        git.clone_to_or_update(self._param, path)
         return path
 
 @_exposed
 class Path(SignedSingleParam):
     def install(self, env):
-        env._run_local_python(["setup.py", "install"], cwd=self._param, shell=False)
+        env.utils.execute_python_script(["setup.py", "install"], cwd=self._param)
+    def checkout(self, env):
+        return self._param
 
 @_exposed
 class PIP(SignedSingleParam):
     def install(self, env):
-        env.execute_script_assert_success("pip", "install", self._param, shell=False)
+        command.execute_assert_success([env.get_pip_executable(), "install", self._param], shell=False)
 @_exposed
 class EasyInstall(SignedSingleParam):
     def install(self, env):
-        env.execute_script_assert_success("easy_install", self._param, shell=False)
+        command.execute_assert_success([env.get_easy_install_executable(), self._param], shell=False)
 
 @_exposed
 class URL(PIP):
