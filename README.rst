@@ -34,6 +34,10 @@ On hosts that don't have pydeploy installed (and perhaps installation is an issu
 
   curl https://github.com/vmalloc/pydeploy/raw/master/scripts/bootstrapper.py | python - <args>
 
+Or even shorter:
+::
+  curl -L bit.ly/ilTVUN | python - <args>
+
 Where *<args>* is the arguments passed to the pydeploy front-end.
   
 Documentation
