@@ -75,6 +75,8 @@ class EnvironmentAPITest(EnvironmentWithLocalPathTest):
     def test__get_argv(self):
         self.assertEquals(self.env.get_argv(), self.argv)
         self.assertIsNot(self.env.get_argv(), self.argv)
+    def test__get_path(self):
+        self.assertEquals(self.env.get_path(), self.path)
     def test__get_python_executable(self):
         self.assertEquals(self.env.get_python_executable(),
                           os.path.join(self.path, "bin", "python"))

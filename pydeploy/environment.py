@@ -26,6 +26,8 @@ class Environment(object):
         self._argv = list(argv)
         self._checkout_cache = None
         self.utils = EnvironmentUtils(self)
+    def get_path(self):
+        return self._path
     def get_argv(self):
         return list(self._argv)
     def get_checkout_cache(self):
