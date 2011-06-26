@@ -16,7 +16,6 @@ class CheckoutCacheTest(ForgeTest):
         os_api.makedirs(self.expecetd_checkout_path)
         self.forge.replay()
         c = CheckoutCache(self.root)
-        self.assertTrue(os.path.isdir(os.path.join(self.root, _CHECKOUT_CACHE_NAME)))
     def test__dont_create_if_not_exists(self):
         os_api.directory_exists(self.expecetd_checkout_path).and_return(True)
         self.forge.replay()
