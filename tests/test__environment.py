@@ -127,6 +127,13 @@ class InstallCheckoutTest(ActivatedEnvironmentTest):
         with self.forge.verified_replay_context():
             result = self.env.checkout(self.source)
         self.assertIs(expected_result, result)
+    def test__main_checkout_sequence_with_arg(self):
+        expected_result = self.forge.create_sentinel()
+        arg = self.forge.create_sentinel()
+        self.source.checkout(self.env, arg).and_return(expected_result)
+        with self.forge.verified_replay_context():
+            result = self.env.checkout(self.source, arg)
+        self.assertIs(expected_result, result)
     def test__installed_signatures(self):
         self.installed = False
         class MySource(Path):

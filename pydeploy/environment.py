@@ -94,11 +94,11 @@ class Environment(object):
             virtualenv_api.activate_environment(self._path)
             self._mark_installed(source)
             return returned
-    def checkout(self, source):
+    def checkout(self, source, *args, **kwargs):
         source = self._make_source_object(source)
         _logger.info("Checking out %r (%s)", source.get_name(), type(source).__name__)
         source = self._make_source_object(source)
-        return source.checkout(self)
+        return source.checkout(self, *args, **kwargs)
     def _make_source_object(self, source):
         if isinstance(source, basestring) and os.path.exists(source):
             source = Path(source)

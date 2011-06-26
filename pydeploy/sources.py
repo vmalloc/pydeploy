@@ -10,7 +10,7 @@ def _exposed(thing):
     return thing
 
 class Source(object):
-    def checkout(self, env):
+    def checkout(self, env, path=None):
         raise NotImplementedError() # pragma: no cover
     def install(self, env):
         raise NotImplementedError() # pragma: no cover
@@ -35,8 +35,9 @@ class Git(SignedSingleParam):
     def install(self, env):
         checkout_path = self.checkout(env)
         Path(checkout_path).install(env)
-    def checkout(self, env):
-        path = env.get_checkout_cache().get_checkout_path(self._param)
+    def checkout(self, env, path=None):
+        if path is None:
+            path = env.get_checkout_cache().get_checkout_path(self._param)
         git.clone_to_or_update(self._param, path)
         return path
 
@@ -44,7 +45,9 @@ class Git(SignedSingleParam):
 class Path(SignedSingleParam):
     def install(self, env):
         env.utils.execute_python_script(["setup.py", "install"], cwd=self._param)
-    def checkout(self, env):
+    def checkout(self, env, path=None):
+        if path is not None:
+            raise NotImplementedError()
         return self._param
 
 @_exposed

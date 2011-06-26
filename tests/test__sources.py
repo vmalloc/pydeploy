@@ -24,6 +24,10 @@ class PathSourceTest(SourceTest):
         self.assertEquals(self.source.get_signature(), "Path({0})".format(self.path))
     def test__checkout(self):
         self.assertEquals(self.source.checkout(self.env), self.path)
+        with self.assertRaises(NotImplementedError):
+            self.source.checkout(self.env, '/another/path')
+    def test__checkout_to_different_path(self):
+        raise unittest.SkipTest()
     def test__install(self):
         self.env.utils.execute_python_script(
             ["setup.py", "install"],
@@ -60,7 +64,14 @@ class GitSourceTest(DelegateToPathInstallTest):
         self.expect_delegation_to_path_install(checkout_path)
         with self.forge.verified_replay_context():
             self.source.install(self.env)
-    def test__git_source_checkout(self):
+    def test__git_source_checkout_with_path_argument(self):
+        checkout_path = "/some/path/to/checkout"
+        git.clone_to_or_update(url=self.repo_url, path=checkout_path)
+
+        with self.forge.verified_replay_context():
+            result = self.source.checkout(self.env, checkout_path)
+        self.assertIs(result, checkout_path)
+    def test__git_source_checkout_no_path_argument(self):
         checkout_path = "/some/path/to/checkout"
         checkout_cache = self.forge.create_mock(CheckoutCache)
         self.env.get_checkout_cache().and_return(checkout_cache)
@@ -84,6 +95,11 @@ class PIPSourceTest(ExternalToolSourceTest):
         command.execute_assert_success([pip_path, "install", self.package_name], shell=False)
         with self.forge.verified_replay_context():
             source.install(self.env)
+    def test__checkout_not_implemented(self):
+        with self.assertRaises(NotImplementedError):
+            sources.PIP(self.package_name).checkout(self.env, '/some/path')
+        with self.assertRaises(NotImplementedError):
+            sources.PIP(self.package_name).checkout(self.env)
 class EasyInstallSourceTest(ExternalToolSourceTest):
     def test__install(self):
         source = sources.EasyInstall(self.package_name)
@@ -92,6 +108,11 @@ class EasyInstallSourceTest(ExternalToolSourceTest):
         command.execute_assert_success([easy_install_path, self.package_name], shell=False)
         with self.forge.verified_replay_context():
             source.install(self.env)
+    def test__checkout_not_implemented(self):
+        with self.assertRaises(NotImplementedError):
+            sources.EasyInstall(self.package_name).checkout(self.env, '/some/path')
+        with self.assertRaises(NotImplementedError):
+            sources.EasyInstall(self.package_name).checkout(self.env)
 
 class SCMTest(SourceTest):
     def test__git(self):
