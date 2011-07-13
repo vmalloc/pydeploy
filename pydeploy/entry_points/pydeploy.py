@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import traceback
 import argparse
+import os
 import sys
 import logging
 from pydeploy.environment import Environment
@@ -22,7 +23,7 @@ def main():
         if args.deployment_file == '-':
             env.execute_deployment_stdin()
         else:
-            env.execute_deployment_file(args.deployment_file)
+            env.execute_deployment_file(os.path.expanduser(args.deployment_file))
     except Exception, e:
         _display_error(e, sys.exc_info()[-1])
         if args.pdb:

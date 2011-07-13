@@ -1,3 +1,5 @@
+import os
+import tempfile
 import unittest
 from test_cases import ForgeTest
 from pydeploy.environment import Environment
@@ -16,10 +18,13 @@ class SourceTest(ForgeTest):
 class PathSourceTest(SourceTest):
     def setUp(self):
         super(PathSourceTest, self).setUp()
-        self.path = "/path/to/package"
+        self.path = tempfile.mkdtemp()
         self.source = sources.Path(self.path)
     def test__get_name(self):
         self.assertEquals(self.source.get_name(), self.path)
+    def test__uses_expanduser(self):
+        source = sources.Path("~/a/b/c")
+        self.assertEquals(source._param, os.path.expanduser("~/a/b/c"))
     def test__get_signature(self):
         self.assertEquals(self.source.get_signature(), "Path({0})".format(self.path))
     def test__checkout(self):
@@ -28,13 +33,23 @@ class PathSourceTest(SourceTest):
             self.source.checkout(self.env, '/another/path')
     def test__checkout_to_different_path(self):
         raise unittest.SkipTest()
-    def test__install(self):
-        self.env.utils.execute_python_script(
+    def test__install_no_pydeploy_setup_script(self):
+        self._expect_installation()
+        with self.forge.verified_replay_context():
+            self.source.install(self.env)
+    def test__install_with_pydeploy_setup_script(self):
+        pydeploy_setup_file = os.path.join(self.path, "pydeploy_setup.py")
+        with open(pydeploy_setup_file, "wb"):
+            pass
+        self.env.execute_deployment_file(pydeploy_setup_file)
+        self._expect_installation()
+        with self.forge.verified_replay_context():
+            self.source.install(self.env)
+    def _expect_installation(self):
+        return self.env.utils.execute_python_script(
             ["setup.py", "install"],
             cwd=self.path
             )
-        with self.forge.verified_replay_context():
-            self.source.install(self.env)
 
 class DelegateToPathInstallTest(SourceTest):
     def setUp(self):

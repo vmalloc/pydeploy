@@ -100,7 +100,7 @@ class Environment(object):
         source = self._make_source_object(source)
         return source.checkout(self, *args, **kwargs)
     def _make_source_object(self, source):
-        if isinstance(source, basestring) and os.path.exists(source):
+        if isinstance(source, basestring) and os.path.exists(os.path.expanduser(source)):
             source = Path(source)
         if not isinstance(source, Source):
             source = EasyInstall(source)

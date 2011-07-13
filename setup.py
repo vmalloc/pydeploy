@@ -19,5 +19,7 @@ setup(name="pydeploy",
       version=__version__,
       packages=find_packages(exclude=["tests"]),
       install_requires=["virtualenv", "pip", "pyforge"],
-      scripts=["scripts/pydeploy"],
+      entry_points = dict(
+          console_scripts = "pydeploy = pydeploy.entry_points.pydeploy:main"
+          )
       )

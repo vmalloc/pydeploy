@@ -39,7 +39,16 @@ Or even shorter:
   curl -L bit.ly/ilTVUN | python - <args>
 
 Where *<args>* is the arguments passed to the pydeploy front-end.
-  
+
+Recursive Deployment
+====================
+
+Sometimes you want a deployment script to install a package that also has dependencies (that is, dependencies that cannot be resolved by pip/easy_install). If you just say::
+
+ env.install("/path/to/package")
+
+then pydeploy will just run the setup.py script, which would fail since the dependencies will not be able to found. Whenever pydeploy tries to install a package through *setup.py* scripts, it also looks for another file, *pydeploy_setup.py*. If that file is found, it is executed by pydeploy **before** the setup file is run, giving the package maintainer a chance to rectify dependencies prior to installation.
+
 Documentation
 =============
 

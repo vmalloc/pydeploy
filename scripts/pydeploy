@@ -1,6 +1,0 @@
-#! /usr/bin/python
-from pydeploy.entry_points.pydeploy import main
-import sys
-
-if __name__ == '__main__':
-    sys.exit(main())
