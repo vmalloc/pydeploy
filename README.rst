@@ -49,6 +49,13 @@ Sometimes you want a deployment script to install a package that also has depend
 
 then pydeploy will just run the setup.py script, which would fail since the dependencies will not be able to found. Whenever pydeploy tries to install a package through *setup.py* scripts, it also looks for another file, *pydeploy_setup.py*. If that file is found, it is executed by pydeploy **before** the setup file is run, giving the package maintainer a chance to rectify dependencies prior to installation.
 
+Installing Directly from Command-Line
+=====================================
+
+If you simply want to install a package, and have pydeploy take care of the rest, you can use the --install flag::
+
+  pydeploy --install /path/to/package /path/to/virtualenv
+
 Documentation
 =============
 

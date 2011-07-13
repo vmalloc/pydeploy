@@ -8,6 +8,7 @@ from pydeploy.environment import Environment
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-v', action='append_const', const=1, dest='verbose', default=[])
+parser.add_argument("--install", action="store_true", default=False, help="Treats the first argument as a source to be installed, rather than a pydeploy script")
 parser.add_argument("--pdb", action="store_true", default=False)
 parser.add_argument("deployment_file")
 parser.add_argument("dir")
@@ -20,10 +21,13 @@ def main():
     env = Environment(args.dir, remainder_argv)
     env.create_and_activate()
     try:
-        if args.deployment_file == '-':
-            env.execute_deployment_stdin()
+        if args.install:
+            env.install(args.deployment_file)
         else:
-            env.execute_deployment_file(os.path.expanduser(args.deployment_file))
+            if args.deployment_file == '-':
+                env.execute_deployment_stdin()
+            else:
+                env.execute_deployment_file(os.path.expanduser(args.deployment_file))
     except Exception, e:
         _display_error(e, sys.exc_info()[-1])
         if args.pdb:
