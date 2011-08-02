@@ -6,28 +6,17 @@ import sys
 import logging
 from pydeploy.environment import Environment
 
-parser = argparse.ArgumentParser()
-parser.add_argument('-v', action='append_const', const=1, dest='verbose', default=[])
-parser.add_argument("--install", action="store_true", default=False, help="Treats the first argument as a source to be installed, rather than a pydeploy script")
-parser.add_argument("--pdb", action="store_true", default=False)
-parser.add_argument("deployment_file")
-parser.add_argument("dir")
-
 _logger = logging.getLogger("pydeploy.main")
 
 def main():
     args, remainder_argv = parser.parse_known_args()
     _configure_logging(args)
-    env = Environment(args.dir, remainder_argv)
+    if args.virtualenv_path is None:
+        raise NotImplementedError() # pragma: no cover
+    env = Environment(args.virtualenv_path, remainder_argv)
     env.create_and_activate()
     try:
-        if args.install:
-            env.install(args.deployment_file)
-        else:
-            if args.deployment_file == '-':
-                env.execute_deployment_stdin()
-            else:
-                env.execute_deployment_file(os.path.expanduser(args.deployment_file))
+        args.func(env, args)
     except Exception, e:
         _display_error(e, sys.exc_info()[-1])
         if args.pdb:
@@ -35,6 +24,15 @@ def main():
             pdb.post_mortem(sys.exc_info()[-1])
         return -1
     return 0
+
+def _run_deployment_file(env, args):
+    if args.deployment_file == '-':
+        env.execute_deployment_stdin()
+    else:
+        env.execute_deployment_file(os.path.expanduser(args.deployment_file))
+
+def _install_source(env, args):
+    env.install(args.source)
 
 def _display_error(e, tb):
     _logger.error("Error occurred while running deployment file:\n %r", e)
@@ -53,3 +51,19 @@ def _configure_logging(args):
         level=level,
         format="--> %(message)s"
         )
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-v', action='append_const', const=1, dest='verbose', default=[])
+parser.add_argument("--pdb", action="store_true", default=False)
+
+subparsers = parser.add_subparsers(help="sub-command help")
+
+run_parser = subparsers.add_parser("run")
+run_parser.set_defaults(func=_run_deployment_file)
+run_parser.add_argument("deployment_file")
+run_parser.add_argument("--env", dest="virtualenv_path", default=None)
+
+install_parser = subparsers.add_parser("install")
+install_parser.set_defaults(func=_install_source)
+install_parser.add_argument("source")
+install_parser.add_argument("--env", dest="virtualenv_path", default=None)

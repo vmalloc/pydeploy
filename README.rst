@@ -22,12 +22,16 @@ And that's it! After the activation, python code executes in the new environment
 To run our config file, we simply execute:
 ::
 
-  pydeploy /path/to/deploy.py ./deployment
+  pydeploy run /path/to/deploy.py
+
+In most cases you would like to run the deployment inside a virtual environment (using *virtualenv*). This is where the *--env* argument comes in, specifying the environment to use or create::
+
+ pydeploy run /path/to/deploy.py --env /tmp/my_environment
 
 You can even serve the file through http:
 ::
 
-  pydeploy http://my_server.com/path/to/deploy.py
+  pydeploy run http://my_server.com/path/to/deploy.py
 
 On hosts that don't have pydeploy installed (and perhaps installation is an issue due to permissions), a bootstrapper is available online:
 ::
@@ -52,9 +56,9 @@ then pydeploy will just run the setup.py script, which would fail since the depe
 Installing Directly from Command-Line
 =====================================
 
-If you simply want to install a package, and have pydeploy take care of the rest, you can use the --install flag::
+If you simply want to install a package, and have pydeploy take care of the rest, you can use the install command::
 
-  pydeploy --install /path/to/package /path/to/virtualenv
+  pydeploy install /path/to/package /path/to/virtualenv
 
 Documentation
 =============
