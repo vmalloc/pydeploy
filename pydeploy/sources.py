@@ -18,6 +18,21 @@ class Source(object):
         raise NotImplementedError() # pragma: no cover
     def get_name(self):
         raise NotImplementedError() # pragma: no cover
+    @classmethod
+    def from_anything(cls, source):
+        if not isinstance(source, Source):
+            if isinstance(source, basestring):
+                source = cls.from_string(source)
+            else:
+                source = EasyInstall(source)
+        return source
+    @classmethod
+    def from_string(cls, source):
+        if os.path.exists(os.path.expanduser(source)):
+            return Path(source)
+        if any(source.startswith(prefix) for prefix in _SCM_PREFIXES):
+            return SCM(source)
+        return EasyInstall(source)
 
 class SignedSingleParam(Source):
     def __init__(self, param):
@@ -73,9 +88,14 @@ class URL(PIP):
 
 @_exposed
 def SCM(url):
-    if url.startswith("git://"):
-        return Git(url)
+    for prefix, source_class in _SCM_PREFIXES.iteritems():
+        if url.startswith(prefix):
+            return source_class(url)
     raise ValueError("Unsupported SCM source: {0!r}".format(url))
+
+_SCM_PREFIXES = {
+    "git://" : Git,
+    }
 
 def get_all_sources_dict():
     return _all_exposed_sources

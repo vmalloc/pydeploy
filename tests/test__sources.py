@@ -96,6 +96,10 @@ class GitSourceTest(DelegateToPathInstallTest):
         with self.forge.verified_replay_context():
             result = self.source.checkout(self.env)
         self.assertIs(result, checkout_path)
+    def test__git_identifies_git_prefix(self):
+        url = "git://bla"
+        source = sources.Source.from_anything(url)
+        self.assertIsInstance(source, sources.Git)
 
 class ExternalToolSourceTest(SourceTest):
     def setUp(self):

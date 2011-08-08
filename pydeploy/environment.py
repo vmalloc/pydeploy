@@ -12,8 +12,6 @@ from .environment_utils import EnvironmentUtils
 from .checkout_cache import CheckoutCache
 from .sources import (
     get_all_sources_dict,
-    EasyInstall,
-    Path,
     Source
     )
 from .exceptions import CommandFailed
@@ -96,11 +94,7 @@ class PythonEnvironment(object):
     def _is_url(self, path_or_url):
         return bool(urlparse(path_or_url).scheme)
     def _make_source_object(self, source):
-        if isinstance(source, basestring) and os.path.exists(os.path.expanduser(source)):
-            source = Path(source)
-        if not isinstance(source, Source):
-            source = EasyInstall(source)
-        return source
+        return Source.from_anything(source)
     def _post_install(self, source):
         raise NotImplementedError() # pragma: no cover
 
@@ -121,7 +115,7 @@ class Environment(PythonEnvironment):
         set_active_environment(self)
     def execute_pip_install(self, source):
         self._execute("{0} {1}".format(self._get_pip_executable(), source))
-    def execute_easy_install(self, *args):
+    def execute_easy_install(self, source):
         self._execute("{0} {1}".format(self._get_easy_install_executable(), source))
     def _get_pip_executable(self):
         return os.path.join(self._get_bin_dir(), "pip")
@@ -162,7 +156,7 @@ class Environment(PythonEnvironment):
 class GlobalEnvironment(PythonEnvironment):
     _checkout_cache = None
     def create_and_activate(self):
-        self._checkout_cache = CheckoutCache(os.path.join(self._get_pydeploy_dir(), "checkout"))
+        self._checkout_cache = CheckoutCache(self._get_pydeploy_dir())
     def execute_easy_install(self, source):
         return self._execute("easy_install {0}".format(source))
     def execute_pip_install(self, source):
