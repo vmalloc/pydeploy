@@ -58,7 +58,13 @@ Installing Directly from Command-Line
 
 If you simply want to install a package, and have pydeploy take care of the rest, you can use the install command::
 
-  pydeploy install /path/to/package /path/to/virtualenv
+  pydeploy install /path/to/package
+
+This will install at the currently active environment (possibly the global python installation). If you want to install to a virtualenv (either existing or create a new one)::
+
+  pydeploy install /path/to/package --env /path/to/env
+
+  
 
 Documentation
 =============
