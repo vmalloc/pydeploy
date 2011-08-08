@@ -4,7 +4,7 @@ import argparse
 import os
 import sys
 import logging
-from pydeploy.environment import Environment
+from pydeploy.environment import Environment, GlobalEnvironment
 
 _logger = logging.getLogger("pydeploy.main")
 
@@ -12,8 +12,9 @@ def main():
     args, remainder_argv = parser.parse_known_args()
     _configure_logging(args)
     if args.virtualenv_path is None:
-        raise NotImplementedError() # pragma: no cover
-    env = Environment(args.virtualenv_path, remainder_argv)
+        env = GlobalEnvironment(remainder_argv)
+    else:
+        env = Environment(args.virtualenv_path, remainder_argv)
     env.create_and_activate()
     try:
         args.func(env, args)

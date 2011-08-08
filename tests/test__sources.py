@@ -105,9 +105,7 @@ class ExternalToolSourceTest(SourceTest):
 class PIPSourceTest(ExternalToolSourceTest):
     def test__install(self):
         source = sources.PIP(self.package_name)
-        pip_path = "/path/to/pip"
-        self.env.get_pip_executable().and_return(pip_path)
-        command.execute_assert_success([pip_path, "install", self.package_name], shell=False)
+        self.env.execute_pip_install(self.package_name)
         with self.forge.verified_replay_context():
             source.install(self.env)
     def test__checkout_not_implemented(self):
@@ -117,10 +115,8 @@ class PIPSourceTest(ExternalToolSourceTest):
             sources.PIP(self.package_name).checkout(self.env)
 class EasyInstallSourceTest(ExternalToolSourceTest):
     def test__install(self):
+        self.env.execute_easy_install(self.package_name)
         source = sources.EasyInstall(self.package_name)
-        easy_install_path = "/path/to/easy_install"
-        self.env.get_easy_install_executable().and_return(easy_install_path)
-        command.execute_assert_success([easy_install_path, self.package_name], shell=False)
         with self.forge.verified_replay_context():
             source.install(self.env)
     def test__checkout_not_implemented(self):

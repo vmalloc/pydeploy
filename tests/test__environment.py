@@ -81,10 +81,10 @@ class EnvironmentAPITest(EnvironmentWithLocalPathTest):
         self.assertEquals(self.env.get_python_executable(),
                           os.path.join(self.path, "bin", "python"))
     def test__get_easy_install_executable(self):
-        self.assertEquals(self.env.get_easy_install_executable(),
+        self.assertEquals(self.env._get_easy_install_executable(),
                           os.path.join(self.path, "bin", "easy_install"))
     def test__get_pip_executable(self):
-        self.assertEquals(self.env.get_pip_executable(),
+        self.assertEquals(self.env._get_pip_executable(),
                           os.path.join(self.path, "bin", "pip"))
     def test__make_source_object_path(self):
         path = os.path.join(tempfile.gettempdir(), "bla")

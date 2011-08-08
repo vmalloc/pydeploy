@@ -1,7 +1,6 @@
 import os
 import logging
 from .scm import git
-from . import command
 
 _all_exposed_sources = {}
 _logger = logging.getLogger("pydeploy.sources")
@@ -62,11 +61,11 @@ class Path(SignedSingleParam):
 @_exposed
 class PIP(SignedSingleParam):
     def install(self, env):
-        command.execute_assert_success([env.get_pip_executable(), "install", self._param], shell=False)
+        env.execute_pip_install(self._param)
 @_exposed
 class EasyInstall(SignedSingleParam):
     def install(self, env):
-        command.execute_assert_success([env.get_easy_install_executable(), self._param], shell=False)
+        env.execute_easy_install(self._param)
 
 @_exposed
 class URL(PIP):
