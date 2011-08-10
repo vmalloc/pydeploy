@@ -31,8 +31,6 @@ class PathSourceTest(SourceTest):
         self.assertEquals(self.source.checkout(self.env), self.path)
         with self.assertRaises(NotImplementedError):
             self.source.checkout(self.env, '/another/path')
-    def test__checkout_to_different_path(self):
-        raise unittest.SkipTest()
     def test__install_no_pydeploy_setup_script(self):
         self._expect_installation()
         with self.forge.verified_replay_context():
