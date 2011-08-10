@@ -64,12 +64,17 @@ class GitSourceTest(DelegateToPathInstallTest):
     def setUp(self):
         super(GitSourceTest, self).setUp()
         self.repo_url = "some/repo/url"
-        self.source = sources.Git(self.repo_url)
+        self.branch = 'some_branch'
+        self.source = sources.Git(self.repo_url, self.branch)
         self.forge.replace(git, "clone_to_or_update")
+    def test__master_is_default_branch(self):
+        self.assertEquals(sources.Git('bla')._branch, 'master')
     def test__get_name(self):
-        self.assertEquals(self.source.get_name(), self.repo_url)
+        self.assertEquals(self.source.get_name(), self.repo_url + "@" + self.branch)
+    def test__repr(self):
+        self.assertEquals(repr(self.source), 'Git({})'.format(self.source.get_name()))
     def test__get_signature(self):
-        self.assertEquals(self.source.get_signature(), "Git({0})".format(self.repo_url))
+        self.assertEquals(self.source.get_signature(), repr(self.source))
     def test__git_source_install(self):
         self.forge.replace(self.source, "checkout")
         checkout_path = "some/checkout/path"
@@ -79,7 +84,7 @@ class GitSourceTest(DelegateToPathInstallTest):
             self.source.install(self.env)
     def test__git_source_checkout_with_path_argument(self):
         checkout_path = "/some/path/to/checkout"
-        git.clone_to_or_update(url=self.repo_url, path=checkout_path)
+        git.clone_to_or_update(url=self.repo_url, path=checkout_path, branch=self.branch)
 
         with self.forge.verified_replay_context():
             result = self.source.checkout(self.env, checkout_path)
@@ -89,7 +94,7 @@ class GitSourceTest(DelegateToPathInstallTest):
         checkout_cache = self.forge.create_mock(CheckoutCache)
         self.env.get_checkout_cache().and_return(checkout_cache)
         checkout_cache.get_checkout_path(self.repo_url).and_return(checkout_path)
-        git.clone_to_or_update(url=self.repo_url, path=checkout_path)
+        git.clone_to_or_update(url=self.repo_url, branch=self.branch, path=checkout_path)
 
         with self.forge.verified_replay_context():
             result = self.source.checkout(self.env)
@@ -132,7 +137,12 @@ class SCMTest(SourceTest):
         repo = "git://some_repo"
         result = sources.SCM(repo)
         self.assertIsInstance(result, sources.Git)
-        self.assertEquals(result._param, repo)
+        self.assertEquals(result._url, repo)
+    def test__git_with_branch(self):
+        result = sources.SCM("git://some_repo@branch_name")
+        self.assertIsInstance(result, sources.Git)
+        self.assertEquals(result._url, "git://some_repo")
+        self.assertEquals(result._branch, "branch_name")
     def test__other(self):
         with self.assertRaises(ValueError):
             sources.SCM("bla")

@@ -30,8 +30,10 @@ class Source(object):
     def from_string(cls, source):
         if os.path.exists(os.path.expanduser(source)):
             return Path(source)
-        if any(source.startswith(prefix) for prefix in _SCM_PREFIXES):
+        try:
             return SCM(source)
+        except InvalidSCMURL:
+            pass
         return EasyInstall(source)
 
 class SignedSingleParam(Source):
@@ -45,16 +47,46 @@ class SignedSingleParam(Source):
     def __repr__(self):
         return "{0}({1})".format(type(self).__name__, self._param)
 
+class SCMSource(Source):
+    _DEFAULT_BRANCH = None
+    def __init__(self, url, branch=None):
+        super(SCMSource, self).__init__()
+        if branch is None:
+            branch = self._DEFAULT_BRANCH
+        self._url = url
+        self._branch = branch
+    def __repr__(self):
+        return "{0}({1})".format(type(self).__name__, self.get_name())
+    def get_name(self):
+        return '{0}@{1}'.format(self._url, self._branch)
+    def get_signature(self):
+        return repr(self)
+    @classmethod
+    def from_string(cls, s):
+        if '@' in s:
+            repo_url, branch_name = s.split("@", 1)
+        else:
+            repo_url = s
+            branch_name = None
+        return cls(repo_url, branch_name)
+    @classmethod
+    def get_prefix(cls):
+        raise NotImplementedError() # pragma: no cover
+
 @_exposed
-class Git(SignedSingleParam):
+class Git(SCMSource):
+    _DEFAULT_BRANCH = 'master'
     def install(self, env):
         checkout_path = self.checkout(env)
         Path(checkout_path).install(env)
     def checkout(self, env, path=None):
         if path is None:
-            path = env.get_checkout_cache().get_checkout_path(self._param)
-        git.clone_to_or_update(self._param, path)
+            path = env.get_checkout_cache().get_checkout_path(self._url)
+        git.clone_to_or_update(self._url, branch=self._branch, path=path)
         return path
+    @classmethod
+    def get_prefix(cls):
+        return 'git://'
 
 @_exposed
 class Path(SignedSingleParam):
@@ -86,16 +118,17 @@ class EasyInstall(SignedSingleParam):
 class URL(PIP):
     pass
 
-@_exposed
-def SCM(url):
-    for prefix, source_class in _SCM_PREFIXES.iteritems():
-        if url.startswith(prefix):
-            return source_class(url)
-    raise ValueError("Unsupported SCM source: {0!r}".format(url))
+class InvalidSCMURL(ValueError):
+    pass
 
-_SCM_PREFIXES = {
-    "git://" : Git,
-    }
+@_exposed
+def SCM(source):
+    for source_class in _KNOWN_SCMS:
+        if source.startswith(source_class.get_prefix()):
+            return source_class.from_string(source)
+    raise InvalidSCMURL("Unsupported SCM source: {0!r}".format(source))
+
+_KNOWN_SCMS = [Git]
 
 def get_all_sources_dict():
     return _all_exposed_sources
