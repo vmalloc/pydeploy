@@ -4,7 +4,6 @@ import tempfile
 from pydeploy import virtualenv_api
 import unittest
 
-
 class VirtualenvAPITest(unittest.TestCase):
     def test__activate_environment(self):
         global _success
@@ -15,11 +14,11 @@ class VirtualenvAPITest(unittest.TestCase):
             os.mkdir(bin_dir)
         activate_this_file = os.path.join(bin_dir, "activate_this.py")
         with open(activate_this_file, "wb") as activate_file:
-            print("""import test__virtualenv_api
-if __file__ != {0!r}:
+            print("""import {0}
+if __file__ != {1!r}:
     raise Exception('Wrong path')
-test__virtualenv_api._success = True
-""".format(activate_this_file), file=activate_file)
+{0}._success = True
+""".format(__name__, activate_this_file), file=activate_file)
 
         virtualenv_api.activate_environment(path)
         self.assertTrue(_success)
