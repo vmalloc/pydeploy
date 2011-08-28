@@ -105,6 +105,18 @@ Aliasing is used to give specific locations for packages to be installed. For in
 
  env.add_alias("pkg_1", SCM('git://some.git.repo/pkg_1.git"))
 
+Executing Other pydeploy Files
+------------------------------
+If you want to reduce repetition, you can include your pydeploy config from another location::
+
+ env.execute_deployment_file("http://url.for.my/pydeploy_file")
+
+And if you want to avoid running the same file twice, you can use env.execute_deployment_file_once::
+
+ env.execute_deployment_file_once("/path/to/my/file")
+
+.. note:: execute_deployment_file_once checks the path given to it. If the exact path has already been executed, it will skip re-executing it. If a different path is given which points to the same file, the signature for the deployment file will be checked as well.
+ 
 Executing Scripts and Functions
 -------------------------------
 The pydeploy environment provides more utilities for performing basic tasks:

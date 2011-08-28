@@ -1,3 +1,4 @@
+from hashlib import sha512
 import cPickle as pickle
 import os
 import sys
@@ -26,7 +27,8 @@ class PythonEnvironment(object):
         self.installer = Installer(self)
         self.utils = EnvironmentUtils(self)
         self._aliases = {}
-        self._executed_deployment_files = set()
+        self._executed_deployment_file_locations = set()
+        self._executed_deployment_file_hashes    = set()
     def add_alias(self, name, source):
         self._aliases[name] = source
     def checkout(self, source, *args, **kwargs):
@@ -36,22 +38,37 @@ class PythonEnvironment(object):
         return source.checkout(self, *args, **kwargs)
     def create_and_activate(self):
         raise NotImplementedError() # pragma: no cover
+    def execute_deployment_file_once(self, path_or_url):
+        executed = False
+        if path_or_url not in self._executed_deployment_file_locations:
+            content = self._get_deployment_file_content(path_or_url)
+            content_hash = sha512(content).digest()
+            if content_hash not in self._executed_deployment_file_hashes:
+                self.execute_deployment_string(content)
+                self._executed_deployment_file_hashes.add(content_hash)
+                executed = True
+            self._executed_deployment_file_locations.add(path_or_url)
+        if not executed:
+            _logger.info("Deployment file at %r already executed. Skipping...", path_or_url)
     def execute_deployment_file(self, path_or_url):
-        if self._is_url(path_or_url):
-            self.execute_deployment_file_url(path_or_url)
-        else:
-            self.execute_deployment_file_path(path_or_url)
+        self.execute_deployment_string(self._get_deployment_file_content(path_or_url))
     def execute_deployment_file_url(self, url):
         _logger.info("Executing deployment file from url %r...", url)
         self.execute_deployment_file_object(os_api.urlopen(url))
     def execute_deployment_file_object(self, fileobj, filename=None):
+        return self.execute_deployment_string(fileobj.read(), filename=filename)
+    def execute_deployment_string(self, content, filename=None):
         executed_locals = self._get_config_file_locals(filename)
-        exec fileobj.read() in executed_locals
+        exec content in executed_locals
     def execute_deployment_file_path(self, path):
         _logger.info("Executing deployment file %r...", path)
         with open(path, "rb") as fileobj:
             with self._filename_as_argv0(path):
                 self.execute_deployment_file_object(fileobj, filename=path)
+    def _get_deployment_file_content(self, path_or_url):
+        if self._is_url(path_or_url):
+            return os_api.urlopen(path_or_url).read()
+        return open(path_or_url).read()
     def execute_deployment_stdin(self):
         _logger.info("Executing deployment script from standard input...")
         self.execute_deployment_file_object(sys.stdin, filename="<stdin>")
