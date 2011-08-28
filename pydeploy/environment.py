@@ -9,6 +9,7 @@ from . import command
 from . import os_api
 from . import virtualenv_api
 from .environment_utils import EnvironmentUtils
+from .installer import Installer
 from .checkout_cache import CheckoutCache
 from .sources import (
     get_all_sources_dict,
@@ -22,6 +23,7 @@ class PythonEnvironment(object):
     def __init__(self, argv=()):
         super(PythonEnvironment, self).__init__()
         self._argv = list(argv)
+        self.installer = Installer(self)
         self.utils = EnvironmentUtils(self)
     def checkout(self, source, *args, **kwargs):
         source = self._make_source_object(source)

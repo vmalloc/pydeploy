@@ -94,12 +94,7 @@ class Path(SignedSingleParam):
         super(Path, self).__init__(*args, **kwargs)
         self._param = os.path.expanduser(self._param)
     def install(self, env):
-        self._run_pydeploy_setup(env)
-        env.utils.execute_python_script(["setup.py", "install"], cwd=self._param)
-    def _run_pydeploy_setup(self, env):
-        pydeploy_setup_file = os.path.join(self._param, "pydeploy_setup.py")
-        if os.path.exists(pydeploy_setup_file):
-            env.execute_deployment_file(pydeploy_setup_file)
+        env.installer.install_unpacked_package(self._param)
     def checkout(self, env, path=None):
         if path is not None:
             raise NotImplementedError()

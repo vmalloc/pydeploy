@@ -5,6 +5,7 @@ from test_cases import ForgeTest
 from pydeploy.environment import Environment
 from pydeploy.environment_utils import EnvironmentUtils
 from pydeploy.checkout_cache import CheckoutCache
+from pydeploy.installer import Installer
 from pydeploy import sources
 from pydeploy.scm import git
 from pydeploy import command
@@ -13,6 +14,7 @@ class SourceTest(ForgeTest):
     def setUp(self):
         super(SourceTest, self).setUp()
         self.env = self.forge.create_mock(Environment)
+        self.env.installer = self.forge.create_mock(Installer)
         self.env.utils = self.forge.create_mock(EnvironmentUtils)
 
 class PathSourceTest(SourceTest):
@@ -31,23 +33,10 @@ class PathSourceTest(SourceTest):
         self.assertEquals(self.source.checkout(self.env), self.path)
         with self.assertRaises(NotImplementedError):
             self.source.checkout(self.env, '/another/path')
-    def test__install_no_pydeploy_setup_script(self):
-        self._expect_installation()
-        with self.forge.verified_replay_context():
-            self.source.install(self.env)
-    def test__install_with_pydeploy_setup_script(self):
-        pydeploy_setup_file = os.path.join(self.path, "pydeploy_setup.py")
-        with open(pydeploy_setup_file, "wb"):
-            pass
-        self.env.execute_deployment_file(pydeploy_setup_file)
-        self._expect_installation()
-        with self.forge.verified_replay_context():
-            self.source.install(self.env)
-    def _expect_installation(self):
-        return self.env.utils.execute_python_script(
-            ["setup.py", "install"],
-            cwd=self.path
-            )
+    def test__install(self):
+        self.env.installer.install_unpacked_package(self.path)
+        self.forge.replay()
+        self.source.install(self.env)
 
 class DelegateToPathInstallTest(SourceTest):
     def setUp(self):
