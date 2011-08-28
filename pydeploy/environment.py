@@ -25,6 +25,10 @@ class PythonEnvironment(object):
         self._argv = list(argv)
         self.installer = Installer(self)
         self.utils = EnvironmentUtils(self)
+        self._aliases = {}
+        self._executed_deployment_files = set()
+    def add_alias(self, name, source):
+        self._aliases[name] = source
     def checkout(self, source, *args, **kwargs):
         source = self._make_source_object(source)
         _logger.info("Checking out %r (%s)", source.get_name(), type(source).__name__)
@@ -96,6 +100,8 @@ class PythonEnvironment(object):
     def _is_url(self, path_or_url):
         return bool(urlparse(path_or_url).scheme)
     def _make_source_object(self, source):
+        if isinstance(source, basestring) and source in self._aliases:
+            source = self._aliases[source]
         return Source.from_anything(source)
     def _post_install(self, source):
         raise NotImplementedError() # pragma: no cover

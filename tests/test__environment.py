@@ -104,6 +104,19 @@ class ActivatedEnvironmentTest(EnvironmentWithLocalPathTest):
         self.env.create_and_activate()
         self.assertEquals(self.activated_count, 1)
 
+class AliasTest(ActivatedEnvironmentTest):
+    def setUp(self):
+        super(AliasTest, self).setUp()
+        self.source = self.forge.create_mock(Source)
+        self.source.get_name().whenever().and_return('some_name_here')
+        self.source.get_signature().whenever().and_return('signature')
+        self.nickname = 'some_nickname'
+    def test__installing_from_string(self):
+        self.env.add_alias(self.nickname, self.source)
+        self.source.install(self.env)
+        self.forge.replay()
+        self.env.install(self.nickname)
+
 class InstallCheckoutTest(ActivatedEnvironmentTest):
     def setUp(self):
         super(InstallCheckoutTest, self).setUp()

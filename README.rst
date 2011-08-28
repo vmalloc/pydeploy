@@ -99,6 +99,11 @@ For some sources, you can perform a *checkout*, that is, fetching the package bu
 
   path_to_package = env.checkout(SCM('git://some.git.repo/repo'))
 
+Aliasing
+--------
+Aliasing is used to give specific locations for packages to be installed. For instance, if you have a package called 'pkg_1', which exists in SCM (and not on PyPI), you can start your deployment file by aliasing it::
+
+ env.add_alias("pkg_1", SCM('git://some.git.repo/pkg_1.git"))
 
 Executing Scripts and Functions
 -------------------------------
@@ -113,8 +118,7 @@ This also accepts lists as commands:
 ::
 
   env.utils.execute_python_script(["/path/to/my_script.py", "arg1"])
-
-
+  
 Argument Passing
 ================
 It is also possible for your deployment file to run a python functions before it finishes. pydeploy consumes arguments from the command line, so getting the 'clean' argv list can be done by the get_argv() method:
