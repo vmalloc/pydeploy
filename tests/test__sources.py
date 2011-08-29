@@ -50,7 +50,7 @@ class PathSourceTest(SourceTest):
         with self.assertRaises(NotImplementedError):
             self.source.checkout(self.env, '/another/path')
     def test__install(self):
-        self.env.installer.install_unpacked_package(self.path)
+        self.env.installer.install_unpacked_package(self.path, self.path)
         self.forge.replay()
         self.source.install(self.env)
 
@@ -60,9 +60,9 @@ class DelegateToPathInstallTest(SourceTest):
         self.path_class = self.forge.create_class_mock(sources.Path)
         self.orig_path_class = sources.Path
         self.forge.replace_with(sources, "Path", self.path_class)
-    def expect_delegation_to_path_install(self, path):
+    def expect_delegation_to_path_install(self, path, name):
         path_mock = self.forge.create_mock(self.orig_path_class)
-        self.path_class(path).and_return(path_mock)
+        self.path_class(path, name=name).and_return(path_mock)
         return path_mock.install(self.env)
 
 class GitSourceTest(DelegateToPathInstallTest):
@@ -84,7 +84,7 @@ class GitSourceTest(DelegateToPathInstallTest):
         self.forge.replace(self.source, "checkout")
         checkout_path = "some/checkout/path"
         self.source.checkout(self.env).and_return(checkout_path)
-        self.expect_delegation_to_path_install(checkout_path)
+        self.expect_delegation_to_path_install(checkout_path, name=self.repo_url)
         with self.forge.verified_replay_context():
             self.source.install(self.env)
     def test__git_source_checkout_with_path_argument(self):

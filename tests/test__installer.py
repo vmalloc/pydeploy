@@ -22,6 +22,7 @@ class InstallerFrontendTest(ForgeTest):
         self._test__install(with_pydeploy_setup=False)
 
     def _test__install(self, with_pydeploy_setup):
+        name = "some_name"
         if with_pydeploy_setup:
             pydeploy_setup_file = os.path.join(self.path, "pydeploy_setup.py")
             with open(pydeploy_setup_file, "w"):
@@ -29,14 +30,14 @@ class InstallerFrontendTest(ForgeTest):
             self.env.execute_deployment_file(pydeploy_setup_file)
         deps = [Requirement.parse("dep{}>=2.0.0".format(i)) for i in range(10)]
         aliased = [deps[2], deps[4]]
-        self.installer._get_install_requirements(self.path).and_return(deps)
+        self.installer._get_install_requirements(self.path, name).and_return(deps)
         for dep in deps:
             self.env.has_alias(dep).and_return(dep in aliased)
             if dep in aliased:
                 self.env.install(dep)
         self._expect_installation()
         self.forge.replay()
-        self.installer.install_unpacked_package(self.path)
+        self.installer.install_unpacked_package(self.path, name)
     def _expect_installation(self):
         return self.env.utils.execute_python_script(
             ["setup.py", "install"],
@@ -49,12 +50,13 @@ class InstallerRequirementsTest(ForgeTest):
         self.env = self.forge.create_mock(PythonEnvironment)
         self.installer = Installer(self.env)
     def test__get_install_requirements(self):
+        name = "some_name"
         package_container = mkdtemp()
         reqs = ["dep{}>=2.0.0".format(i) for i in range(10)]
         with open(os.path.join(package_container, "setup.py"), "w") as setup_file:
             setup_file.write(_SETUP_FILE_SKELETON.format(reqs=reqs))
         self.forge.replay()
-        parsed_reqs = self.installer._get_install_requirements(package_container)
+        parsed_reqs = self.installer._get_install_requirements(package_container, name=name)
         for parsed_requirement, dep in zip(parsed_reqs, reqs):
             self.assertIsInstance(parsed_requirement, Requirement)
             self.assertEquals(parsed_requirement.project_name, dep.split(">=")[0])

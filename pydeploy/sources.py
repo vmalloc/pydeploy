@@ -77,7 +77,7 @@ class Git(SCMSource):
     _DEFAULT_BRANCH = 'master'
     def install(self, env):
         checkout_path = self.checkout(env)
-        Path(checkout_path).install(env)
+        Path(checkout_path, name=self._url).install(env)
     def checkout(self, env, path=None):
         if path is None:
             path = env.get_checkout_cache().get_checkout_path(self._url)
@@ -89,11 +89,12 @@ class Git(SCMSource):
 
 @_exposed
 class Path(SignedSingleParam):
-    def __init__(self, *args, **kwargs):
-        super(Path, self).__init__(*args, **kwargs)
+    def __init__(self, path, name=None):
+        super(Path, self).__init__(path)
         self._param = os.path.expanduser(self._param)
+        self._name = name if name is not None else self._param
     def install(self, env):
-        env.installer.install_unpacked_package(self._param)
+        env.installer.install_unpacked_package(self._param, name=self._name)
     def checkout(self, env, path=None):
         if path is not None:
             raise NotImplementedError()
