@@ -1,7 +1,7 @@
-import unittest
+from infi.unittest import TestCase
 from forge import Forge
 
-class ForgeTest(unittest.TestCase):
+class ForgeTest(TestCase):
     def setUp(self):
         super(ForgeTest, self).setUp()
         self.forge = Forge()

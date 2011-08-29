@@ -8,6 +8,7 @@ from tempfile import gettempdir
 from test_cases import ForgeTest
 from pydeploy import os_api
 from pydeploy.environment import Environment
+from infi.unittest import parameters
 
 class DeploymentFileExecutionTest(ForgeTest):
     _DEPLOYMENT_SCRIPT = """\
@@ -56,7 +57,8 @@ env.__test__.__success__ = True"""
         sys.stdin = StringIO(self._DEPLOYMENT_SCRIPT)
         self.env.execute_deployment_stdin()
         self.assertSuccess()
-    def _test__execute_once(self, is_url, same_arg, same_content):
+    @parameters.toggle('is_url', 'same_arg', 'same_content')
+    def test__execute_once(self, is_url, same_arg, same_content):
         if is_url:
             arg = "http://a"
             os_api.urlopen(arg).and_return(StringIO(self._DEPLOYMENT_SCRIPT))
@@ -78,8 +80,3 @@ env.__test__.__success__ = True"""
             self.assertFalse(self.__success__)
         else:
             self.assertTrue(self.__success__)
-
-_BOOL = (True, False)
-
-for combination in itertools.product(_BOOL, _BOOL, _BOOL):
-    setattr(DeploymentFileExecutionTest, 'test__execute_once_{}_{}_{}'.format(*combination), lambda self, c=combination : self._test__execute_once(*c))
