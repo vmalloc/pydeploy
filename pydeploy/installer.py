@@ -18,7 +18,8 @@ class Installer(object):
             self._env.execute_deployment_file(pydeploy_setup_file)
     def _install_dependencies(self, path):
         for dep in self._get_install_dependencies(path):
-            self._env.install(dep)
+            if self._env.has_alias(dep):
+                self._env.install(dep)
     def _get_install_dependencies(self, path):
         temp_dir = tempfile.mkdtemp()
         execute_assert_success("{0} setup.py bdist_egg --dist-dir={1}".format(sys.executable, temp_dir),

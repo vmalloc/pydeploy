@@ -31,6 +31,8 @@ class PythonEnvironment(object):
         self._executed_deployment_file_hashes    = set()
     def add_alias(self, name, source):
         self._aliases[name] = source
+    def has_alias(self, name):
+        return name in self._aliases
     def checkout(self, source, *args, **kwargs):
         source = self._make_source_object(source)
         _logger.info("Checking out %r (%s)", source.get_name(), type(source).__name__)

@@ -116,6 +116,10 @@ class AliasTest(ActivatedEnvironmentTest):
         self.source.install(self.env)
         self.forge.replay()
         self.env.install(self.nickname)
+    def test__has_alias(self):
+        self.env.add_alias(self.nickname, self.source)
+        self.assertTrue(self.env.has_alias(self.nickname))
+        self.assertFalse(self.env.has_alias("bla"))
 
 class InstallCheckoutTest(ActivatedEnvironmentTest):
     def setUp(self):

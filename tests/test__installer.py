@@ -26,10 +26,13 @@ class InstallerFrontendTest(ForgeTest):
             with open(pydeploy_setup_file, "w"):
                 pass
             self.env.execute_deployment_file(pydeploy_setup_file)
-        deps = [self.forge.create_mock(Source) for i in range(10)]
+        deps = ["dep{}".format(i) for i in range(10)]
+        aliased = [deps[2], deps[4]]
         self.installer._get_install_dependencies(self.path).and_return(deps)
         for dep in deps:
-            self.env.install(dep)
+            self.env.has_alias(dep).and_return(dep in aliased)
+            if dep in aliased:
+                self.env.install(dep)
         self._expect_installation()
         self.forge.replay()
         self.installer.install_unpacked_package(self.path)
