@@ -123,12 +123,16 @@ class PythonEnvironment(object):
         return bool(urlparse(path_or_url).scheme)
     def _make_source_object(self, source):
         if isinstance(source, pkg_resources.Requirement):
-            if source.specs:
-                raise NotImplementedError() # pragma: no cover
+            specs = source.specs
             source = source.unsafe_name
+        else:
+            specs = []
+        if specs:
+            raise NotImplementedError("Installing from specs not supported (for {0})".format(source))
         if isinstance(source, basestring) and source in self._aliases:
             source = self._aliases[source]
-        return Source.from_anything(source)
+        source = Source.from_anything(source)
+        return source
     def _post_install(self, source):
         raise NotImplementedError() # pragma: no cover
 

@@ -1,9 +1,12 @@
-import sys
+import logging
 import os
+import sys
 import tempfile
 import zipfile
 from .command import execute_assert_success
 from pkg_resources import parse_requirements
+
+_logger = logging.getLogger("pydeploy.installer")
 
 class Installer(object):
     def __init__(self, env):
@@ -20,6 +23,7 @@ class Installer(object):
     def _install_requirements(self, path):
         for req in self._get_install_requirements(path):
             if self._env.has_alias(req):
+                _logger.info("Package depends on %s which can be installed through an alias. Installing...", req)
                 self._env.install(req)
     def _get_install_requirements(self, path):
         temp_dir = tempfile.mkdtemp()
