@@ -3,6 +3,7 @@ import cPickle as pickle
 import os
 import sys
 import logging
+import pkg_resources
 import subprocess
 from contextlib import contextmanager
 from urlparse import urlparse
@@ -32,6 +33,8 @@ class PythonEnvironment(object):
     def add_alias(self, name, source):
         self._aliases[name] = source
     def has_alias(self, name):
+        if isinstance(name, pkg_resources.Requirement):
+            name = name.unsafe_name
         return name in self._aliases
     def checkout(self, source, *args, **kwargs):
         source = self._make_source_object(source)
@@ -119,6 +122,10 @@ class PythonEnvironment(object):
     def _is_url(self, path_or_url):
         return bool(urlparse(path_or_url).scheme)
     def _make_source_object(self, source):
+        if isinstance(source, pkg_resources.Requirement):
+            if source.specs:
+                raise NotImplementedError() # pragma: no cover
+            source = source.unsafe_name
         if isinstance(source, basestring) and source in self._aliases:
             source = self._aliases[source]
         return Source.from_anything(source)

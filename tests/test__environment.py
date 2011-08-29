@@ -3,6 +3,7 @@ import time
 import os
 import tempfile
 import unittest
+from pkg_resources import Requirement
 import forge
 from test_cases import ForgeTest
 from pydeploy import environment
@@ -116,10 +117,19 @@ class AliasTest(ActivatedEnvironmentTest):
         self.source.install(self.env)
         self.forge.replay()
         self.env.install(self.nickname)
+    def test__installing_from_requirement_no_constraint(self):
+        self.env.add_alias(self.nickname, self.source)
+        self.source.install(self.env)
+        self.forge.replay()
+        self.env.install(Requirement.parse(self.nickname))
+    def test__installing_from_requirements_with_constraints(self):
+        with self.assertRaises(NotImplementedError):
+            self.env.install(Requirement.parse("bla>=2.0.0"))
     def test__has_alias(self):
         self.env.add_alias(self.nickname, self.source)
         self.assertTrue(self.env.has_alias(self.nickname))
         self.assertFalse(self.env.has_alias("bla"))
+        self.assertTrue(self.env.has_alias(Requirement.parse("{}>=2.0.0".format(self.nickname))))
 
 class InstallCheckoutTest(ActivatedEnvironmentTest):
     def setUp(self):
