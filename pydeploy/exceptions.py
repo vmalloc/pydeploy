@@ -1,6 +1,9 @@
 class DeploymentException(Exception):
     pass
 
+class RequiredVersionNotFound(Exception):
+    pass
+
 class CommandFailed(DeploymentException):
     def __init__(self, cmd, returncode, output):
         super(CommandFailed, self).__init__()

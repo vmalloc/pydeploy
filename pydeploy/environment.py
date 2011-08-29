@@ -127,10 +127,10 @@ class PythonEnvironment(object):
             source = source.unsafe_name
         else:
             specs = []
-        if specs:
-            raise NotImplementedError("Installing from specs not supported (for {0})".format(source))
         if isinstance(source, basestring) and source in self._aliases:
             source = self._aliases[source]
+        if specs:
+            source = source.resolve_constraints(specs)
         source = Source.from_anything(source)
         return source
     def _post_install(self, source):

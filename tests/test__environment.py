@@ -123,8 +123,15 @@ class AliasTest(ActivatedEnvironmentTest):
         self.forge.replay()
         self.env.install(Requirement.parse(self.nickname))
     def test__installing_from_requirements_with_constraints(self):
-        with self.assertRaises(NotImplementedError):
-            self.env.install(Requirement.parse("bla>=2.0.0"))
+        real_source = self.forge.create_mock(Source)
+        real_source.get_name().whenever().and_return('real_source_name')
+        real_source.get_signature().whenever().and_return('real_source_signature')
+        self.env.add_alias("bla", self.source)
+        source = Requirement.parse("bla>=2.0.0")
+        self.source.resolve_constraints([(">=", "2.0.0")]).and_return(real_source)
+        real_source.install(self.env)
+        self.forge.replay()
+        self.env.install(source)
     def test__has_alias(self):
         self.env.add_alias(self.nickname, self.source)
         self.assertTrue(self.env.has_alias(self.nickname))

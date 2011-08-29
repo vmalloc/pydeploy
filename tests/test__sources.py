@@ -1,6 +1,7 @@
 import os
 import tempfile
-import unittest
+from pkg_resources import Requirement
+from infi.unittest import parameters
 from test_cases import ForgeTest
 from pydeploy.environment import Environment
 from pydeploy.environment_utils import EnvironmentUtils
@@ -9,6 +10,7 @@ from pydeploy.installer import Installer
 from pydeploy import sources
 from pydeploy.scm import git
 from pydeploy import command
+from pydeploy import exceptions
 
 class SourceTest(ForgeTest):
     def setUp(self):
@@ -108,6 +110,62 @@ class GitSourceTest(DelegateToPathInstallTest):
         url = "git://bla"
         source = sources.Source.from_anything(url)
         self.assertIsInstance(source, sources.Git)
+
+class GitContraintsTest(ForgeTest):
+    def setUp(self):
+        super(GitContraintsTest, self).setUp()
+        self.forge.replace(git, "get_remote_references_dict")
+        self.url = "some_url"
+        self.source = sources.Git(self.url)
+    def test__more_than_one_constraint_not_supported(self):
+        with self.assertRaises(NotImplementedError):
+            self.source.resolve_constraints([('>=', '2.0.0'), ('<=', '3.0.0')])
+    @parameters.iterate('tag', ['v2.0.0', '2.0.0'])
+    def test__exact_version_matches_tag(self, tag):
+        self._assert_chooses("x==2.0.0", {
+            git.Tag(tag) : "some_hash"
+            }, 'tags/{}'.format(tag))
+    def test__exact_version_with_no_match_raises_exception(self):
+        self._assert_no_match('x==2.0.0', {
+            git.Tag('bla') : 'h1',
+            git.Branch('bloop') : 'h2'
+            })
+    @parameters.iterate('branch_name', ['v2.0.0', '2.0.0'])
+    def test__minimum_version_inclusive_selects_exact(self, branch_name):
+        self._assert_chooses("x>=2.0.0", {
+            git.Branch(branch_name) : "h1"
+            }, branch_name)
+    @parameters.toggle('inclusive')
+    @parameters.iterate('branch_name', ['3.0.0', 'v3.0.0', '2.3.2', 'v2.3'])
+    def test__minimum_version_with_matches(self, inclusive, branch_name):
+        self._assert_chooses("x{0}2.0.0".format(">=" if inclusive else ">"), {
+            git.Branch(branch_name)
+            }, branch_name)
+    @parameters.toggle('inclusive')
+    @parameters.iterate('branch_name', ['2.0.0-a1', 'v2.0.0-b1', 'v1.9'])
+    def test__minimum_version_without_matches(self, inclusive, branch_name):
+        self._assert_no_match("x{0}2.0.0".format(">=" if inclusive else ">"), {
+            git.Branch(branch_name)
+            })
+    @parameters.toggle('inclusive')
+    def test__unbound_version_takes_from_master(self, inclusive):
+        self._assert_chooses("x{0}2.0.0".format(">=" if inclusive else ">"), {
+            git.Branch('master')
+            }, 'master')
+    def _assert_chooses(self, requirement, options, chosen):
+        requirement = Requirement.parse(requirement)
+        git.get_remote_references_dict(self.url).and_return(options)
+        self.forge.replay()
+        new_source = self.source.resolve_constraints(requirement.specs)
+        self.assertIsInstance(new_source, sources.Git)
+        self.assertEquals(new_source._url, self.url)
+        self.assertEquals(new_source._branch, chosen)
+    def _assert_no_match(self, requirement, options):
+        specs = Requirement.parse(requirement).specs
+        git.get_remote_references_dict(self.url).and_return(options)
+        self.forge.replay()
+        with self.assertRaises(exceptions.RequiredVersionNotFound):
+            self.source.resolve_constraints(specs)
 
 class ExternalToolSourceTest(SourceTest):
     def setUp(self):

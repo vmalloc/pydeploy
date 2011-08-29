@@ -1,6 +1,8 @@
 import os
 import logging
 from .scm import git
+from . import exceptions
+from pkg_resources import parse_version
 
 _all_exposed_sources = {}
 _logger = logging.getLogger("pydeploy.sources")
@@ -17,6 +19,8 @@ class Source(object):
     def get_signature(self):
         raise NotImplementedError() # pragma: no cover
     def get_name(self):
+        raise NotImplementedError() # pragma: no cover
+    def resolve_constraints(self, constraints):
         raise NotImplementedError() # pragma: no cover
     @classmethod
     def from_anything(cls, source):
@@ -86,6 +90,49 @@ class Git(SCMSource):
     @classmethod
     def get_prefix(cls):
         return 'git://'
+    def resolve_constraints(self, constraints):
+        if len(constraints) > 1:
+            raise NotImplementedError() # pragma: no cover
+        [(constraint_type, version)] = constraints
+        remote_refs = git.get_remote_references_dict(self._url)
+        if constraint_type == '==':
+            ref = self._get_version_ref(remote_refs, version)
+        elif constraint_type in (">=", ">"):
+            ref = self._get_version_ref_from_minimal(remote_refs, version, inclusive = (constraint_type == '>='))
+        else:
+            raise NotImplementedError() # pragma: no cover
+        if ref is None:
+            raise exceptions.RequiredVersionNotFound("Could not find version {0}".format(version))
+        _logger.info("Found match for %s%s on %s: %s", constraint_type, version, self._url, ref)
+        return Git(self._url, branch=ref)
+    def _get_version_ref(self, remote_refs, version):
+        version = self._normalize_version(version)
+        for remote_ref, normalized in self._iter_normalized_versions(remote_refs):
+            if normalized == version:
+                return remote_ref.to_ref_name()
+        return None
+    def _get_version_ref_from_minimal(self, remote_refs, version, inclusive):
+        version = self._normalize_version(version)
+        for remote_ref, normalized in self._iter_normalized_versions(remote_refs):
+            if inclusive:
+                matches = normalized >= version
+            else:
+                matches = normalized > version
+            if matches:
+                return remote_ref.to_ref_name()
+        if git.Branch('master') in remote_refs:
+            return git.Branch('master')
+        return None
+    def _iter_normalized_versions(self, collection):
+        for ref_name in collection:
+            normalized = self._normalize_version(ref_name)
+            if normalized is None:
+                continue
+            yield ref_name, normalized
+    def _normalize_version(self, version):
+        if version.startswith("v") or version.startswith("V"):
+            version = version[1:]
+        return parse_version(version)
 
 @_exposed
 class Path(SignedSingleParam):

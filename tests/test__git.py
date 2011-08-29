@@ -37,3 +37,25 @@ class CloneToTest(GitTest):
         command.execute_assert_success("git clone -b {0} {1} {2}".format(self.branch, self.url, self.path), shell=True)
         with self.forge.verified_replay_context():
             git.clone_to(self.url, self.branch, self.path)
+
+class RemoteReferencesTest(GitTest):
+    def test__remote_references(self):
+        command.execute_assert_success("git ls-remote {0}".format(self.url), shell=True).and_return((0, """\
+ccd9dc4f0775c442ede15db26c26c02a766cf1a	HEAD
+4ccd9dc4f0775c442ede15db26c26c02a766cf1a	refs/heads/master
+bee1140b66c0ca1cb788e52697b7fb66ecb650bd        some_symlink -> blap
+bee1140b66c0ca1cb788e52697b7fb66ecb650bd	refs/tags/v0.0.1
+"""))
+        self.forge.replay()
+        result = git.get_remote_references_dict(self.url)
+        self.assertIsInstance(result, dict)
+        refs = sorted(result)
+        self.assertEquals(len(refs), 2)
+        self.assertIsInstance(refs[0], git.Branch)
+        self.assertEquals(refs[0], 'master')
+        self.assertEquals(result['master'], "4ccd9dc4f0775c442ede15db26c26c02a766cf1a")
+        self.assertEquals(refs[0].to_ref_name(), 'master')
+        self.assertIsInstance(refs[1], git.Tag)
+        self.assertEquals(refs[1], 'v0.0.1')
+        self.assertEquals(refs[1].to_ref_name(), 'tags/v0.0.1')
+        self.assertEquals(result['v0.0.1'], "bee1140b66c0ca1cb788e52697b7fb66ecb650bd")
