@@ -17,6 +17,22 @@ class SourceTest(ForgeTest):
         self.env.installer = self.forge.create_mock(Installer)
         self.env.utils = self.forge.create_mock(EnvironmentUtils)
 
+class SourceFromStringTest(ForgeTest):
+    def setUp(self):
+        super(SourceFromStringTest, self).setUp()
+        self.S = sources.Source.from_anything
+    def test__git(self):
+        self.assertIsInstance(self.S("git://bla"), sources.Git)
+    def test__path(self):
+        filename = tempfile.mkdtemp()
+        self.assertIsInstance(self.S(filename), sources.Path)
+    def test__easy_install(self):
+        self.assertIsInstance(self.S("blablabla"), sources.EasyInstall)
+    def test__invalid_source(self):
+        for invalid_value in [2, 2.5, True]:
+            with self.assertRaises(ValueError):
+                self.S(invalid_value)
+
 class PathSourceTest(SourceTest):
     def setUp(self):
         super(PathSourceTest, self).setUp()

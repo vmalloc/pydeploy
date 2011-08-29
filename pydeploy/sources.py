@@ -21,10 +21,9 @@ class Source(object):
     @classmethod
     def from_anything(cls, source):
         if not isinstance(source, Source):
-            if isinstance(source, basestring):
-                source = cls.from_string(source)
-            else:
-                source = EasyInstall(source)
+            if not isinstance(source, basestring):
+                raise ValueError(source)
+            return cls.from_string(source)
         return source
     @classmethod
     def from_string(cls, source):

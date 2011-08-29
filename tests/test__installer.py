@@ -1,4 +1,5 @@
 import os
+from pkg_resources import Requirement
 from .test_cases import ForgeTest
 from tempfile import mkdtemp
 from pydeploy.environment import PythonEnvironment
@@ -12,7 +13,7 @@ class InstallerFrontendTest(ForgeTest):
         self.env = self.forge.create_mock(PythonEnvironment)
         self.env.utils = self.forge.create_mock(EnvironmentUtils)
         self.installer = Installer(self.env)
-        self.forge.replace(self.installer, "_get_install_dependencies")
+        self.forge.replace(self.installer, "_get_install_requirements")
         self.path = mkdtemp()
 
     def test__install_with_pydeploy_setup(self):
@@ -26,9 +27,9 @@ class InstallerFrontendTest(ForgeTest):
             with open(pydeploy_setup_file, "w"):
                 pass
             self.env.execute_deployment_file(pydeploy_setup_file)
-        deps = ["dep{}".format(i) for i in range(10)]
+        deps = [Requirement.parse("dep{}>=2.0.0".format(i)) for i in range(10)]
         aliased = [deps[2], deps[4]]
-        self.installer._get_install_dependencies(self.path).and_return(deps)
+        self.installer._get_install_requirements(self.path).and_return(deps)
         for dep in deps:
             self.env.has_alias(dep).and_return(dep in aliased)
             if dep in aliased:
@@ -42,19 +43,22 @@ class InstallerFrontendTest(ForgeTest):
             cwd=self.path
             )
 
-class InstallerDependenciesTest(ForgeTest):
+class InstallerRequirementsTest(ForgeTest):
     def setUp(self):
-        super(InstallerDependenciesTest, self).setUp()
+        super(InstallerRequirementsTest, self).setUp()
         self.env = self.forge.create_mock(PythonEnvironment)
         self.installer = Installer(self.env)
-    def test__get_install_dependencies(self):
+    def test__get_install_requirements(self):
         package_container = mkdtemp()
-        deps = ["dep__{}".format(i) for i in range(10)]
+        reqs = ["dep{}>=2.0.0".format(i) for i in range(10)]
         with open(os.path.join(package_container, "setup.py"), "w") as setup_file:
-            setup_file.write(_SETUP_FILE_SKELETON.format(deps=deps))
+            setup_file.write(_SETUP_FILE_SKELETON.format(reqs=reqs))
         self.forge.replay()
-        parsed_deps = self.installer._get_install_dependencies(package_container)
-        self.assertEquals(parsed_deps, deps)
+        parsed_reqs = self.installer._get_install_requirements(package_container)
+        for parsed_requirement, dep in zip(parsed_reqs, reqs):
+            self.assertIsInstance(parsed_requirement, Requirement)
+            self.assertEquals(parsed_requirement.project_name, dep.split(">=")[0])
+
 
 _SETUP_FILE_SKELETON = """\
 from setuptools import setup, find_packages
@@ -62,6 +66,6 @@ from setuptools import setup, find_packages
 setup(name="somepkg",
       version="0.0.1",
       packages=find_packages(),
-      install_requires={deps},
+      install_requires={reqs},
       )
 """
