@@ -45,7 +45,7 @@ class GetActiveEnvironmentTest(EnvironmentTest):
         create_environment_stub = self.forge.replace(virtualenv_api, "create_environment")
         e = self.forge.create_hybrid_mock(environment.Environment)
         e.__forge__.enable_setattr_during_replay()
-        e._path = path = "some/path"
+        e._path = path = os.path.join(tempfile.mkdtemp(), "some", "path")
         create_environment_stub(e._path)
         def _assert_no_active_environment():
             self.assertIsNone(get_active_envrionment())
