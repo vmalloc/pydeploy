@@ -14,7 +14,7 @@ Installing a package with pydeploy is as easy as it gets::
 * a URL of an SCM repository (like git://some_hostname/repo)
 * a name of a package to be searched in PyPI (in this case it's actually invokes *easy_install* under the hood).
 
-.. note:: if you would like the package to be installed in a virtual environment (with virtualenv), you can use the **--env=path** flag to point it to your virtual environment directory.
+.. note:: if you would like the package to be installed in a virtual environment (with **virtualenv**), you can use the **--env=path** flag to point it to your virtual environment directory.
 
 Running a Configuration File
 ============================
