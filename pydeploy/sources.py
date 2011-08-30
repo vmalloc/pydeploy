@@ -14,7 +14,7 @@ def _exposed(thing):
 class Source(object):
     def checkout(self, env, path=None):
         raise NotImplementedError() # pragma: no cover
-    def install(self, env):
+    def install(self, env, reinstall):
         raise NotImplementedError() # pragma: no cover
     def get_signature(self):
         raise NotImplementedError() # pragma: no cover
@@ -79,9 +79,9 @@ class SCMSource(Source):
 @_exposed
 class Git(SCMSource):
     _DEFAULT_BRANCH = 'master'
-    def install(self, env):
+    def install(self, env, reinstall):
         checkout_path = self.checkout(env)
-        Path(checkout_path, name=self._url).install(env)
+        Path(checkout_path, name=self._url).install(env, reinstall)
     def checkout(self, env, path=None):
         if path is None:
             path = env.get_checkout_cache().get_checkout_path(self._url)
@@ -140,8 +140,8 @@ class Path(SignedSingleParam):
         super(Path, self).__init__(path)
         self._param = os.path.expanduser(self._param)
         self._name = name if name is not None else self._param
-    def install(self, env):
-        env.installer.install_unpacked_package(self._param, name=self._name)
+    def install(self, env, reinstall):
+        env.installer.install_unpacked_package(self._param, name=self._name, reinstall=reinstall)
     def checkout(self, env, path=None):
         if path is not None:
             raise NotImplementedError()
@@ -149,12 +149,12 @@ class Path(SignedSingleParam):
 
 @_exposed
 class PIP(SignedSingleParam):
-    def install(self, env):
-        env.execute_pip_install(self._param)
+    def install(self, env, reinstall):
+        env.execute_pip_install(self._param, reinstall=reinstall)
 @_exposed
 class EasyInstall(SignedSingleParam):
-    def install(self, env):
-        env.execute_easy_install(self._param)
+    def install(self, env, reinstall):
+        env.execute_easy_install(self._param, reinstall=reinstall)
 
 @_exposed
 class URL(PIP):

@@ -2,7 +2,7 @@ import random
 import time
 import os
 import tempfile
-import unittest
+from infi.unittest import parameters
 from pkg_resources import Requirement
 import forge
 from test_cases import ForgeTest
@@ -112,26 +112,29 @@ class AliasTest(ActivatedEnvironmentTest):
         self.source.get_name().whenever().and_return('some_name_here')
         self.source.get_signature().whenever().and_return('signature')
         self.nickname = 'some_nickname'
-    def test__installing_from_string(self):
+    @parameters.toggle('reinstall')
+    def test__installing_from_string(self, reinstall):
         self.env.add_alias(self.nickname, self.source)
-        self.source.install(self.env)
+        self.source.install(self.env, reinstall=reinstall)
         self.forge.replay()
-        self.env.install(self.nickname)
-    def test__installing_from_requirement_no_constraint(self):
+        self.env.install(self.nickname, reinstall=reinstall)
+    @parameters.toggle('reinstall')
+    def test__installing_from_requirement_no_constraint(self, reinstall):
         self.env.add_alias(self.nickname, self.source)
-        self.source.install(self.env)
+        self.source.install(self.env, reinstall=reinstall)
         self.forge.replay()
-        self.env.install(Requirement.parse(self.nickname))
-    def test__installing_from_requirements_with_constraints(self):
+        self.env.install(Requirement.parse(self.nickname), reinstall=reinstall)
+    @parameters.toggle('reinstall')
+    def test__installing_from_requirements_with_constraints(self, reinstall):
         real_source = self.forge.create_mock(Source)
         real_source.get_name().whenever().and_return('real_source_name')
         real_source.get_signature().whenever().and_return('real_source_signature')
         self.env.add_alias("bla", self.source)
         source = Requirement.parse("bla>=2.0.0")
         self.source.resolve_constraints([(">=", "2.0.0")]).and_return(real_source)
-        real_source.install(self.env)
+        real_source.install(self.env, reinstall=reinstall)
         self.forge.replay()
-        self.env.install(source)
+        self.env.install(source, reinstall=reinstall)
     def test__has_alias(self):
         self.env.add_alias(self.nickname, self.source)
         self.assertTrue(self.env.has_alias(self.nickname))
@@ -146,32 +149,38 @@ class InstallCheckoutTest(ActivatedEnvironmentTest):
         self.source.get_name = lambda: self.source_name
         self.source_signature = "some_signature"
         self.source.get_signature = lambda: self.source_signature
-    def test__main_installation_sequence(self):
+    def _assert_env_is_in_installation_context(self):
+        self.assertIsNotNone(self.env.installer._context)
+    def _assert_env_is_not_in_installation_context(self):
+        self.assertIsNone(self.env.installer._context)
+    @parameters.toggle('reinstall')
+    def test__main_installation_sequence(self, reinstall):
         expected_result = self.forge.create_sentinel()
-        self.source.install(self.env).and_return(expected_result)
+        self.source.install(self.env, reinstall=reinstall).\
+                                      and_call(self._assert_env_is_in_installation_context).\
+                                      and_return(expected_result)
 
         with self.forge.verified_replay_context():
+            self._assert_env_is_not_in_installation_context()
             self.assertEquals(self.activated_count, 1)
-            result = self.env.install(self.source)
+            result = self.env.install(self.source, reinstall=reinstall)
             self.assertEquals(self.activated_count, 2)
         self.assertIs(result, expected_result)
-    def test__main_checkout_sequence(self):
-        expected_result = self.forge.create_sentinel()
-        self.source.checkout(self.env).and_return(expected_result)
-        with self.forge.verified_replay_context():
-            result = self.env.checkout(self.source)
-        self.assertIs(expected_result, result)
-    def test__main_checkout_sequence_with_arg(self):
+    @parameters.toggle('with_arg')
+    def test__main_checkout_sequence(self, with_arg):
         expected_result = self.forge.create_sentinel()
         arg = self.forge.create_sentinel()
-        self.source.checkout(self.env, arg).and_return(expected_result)
+        self.source.checkout(self.env, *([arg] if with_arg else ())).\
+                      and_call(self._assert_env_is_not_in_installation_context).\
+                      and_return(expected_result)
         with self.forge.verified_replay_context():
-            result = self.env.checkout(self.source, arg)
+            self._assert_env_is_not_in_installation_context()
+            result = self.env.checkout(self.source, *([arg] if with_arg else ()))
         self.assertIs(expected_result, result)
     def test__installed_signatures(self):
         self.installed = False
         class MySource(Path):
-            def install(self_, env):
+            def install(self_, env, reinstall):
                 if self.installed:
                     raise Exception("Already installed")
                 self.installed = True

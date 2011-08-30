@@ -87,12 +87,13 @@ class PythonEnvironment(object):
             self._argv = old_argv
 
     def install(self, source, reinstall=True):
-        source = self._make_source_object(source)
-        _logger.info("Installing %r (%s)", source.get_name(), type(source).__name__)
-        if not self._is_already_installed(source) or reinstall:
-            returned = source.install(self)
-            self._post_install(source)
-            return returned
+        with self.installer.get_installation_context():
+            source = self._make_source_object(source)
+            _logger.info("Installing %r (%s)", source.get_name(), type(source).__name__)
+            if not self._is_already_installed(source) or reinstall:
+                returned = source.install(self, reinstall=reinstall)
+                self._post_install(source)
+                return returned
     def get_argv(self):
         return list(self._argv)
     def get_checkout_cache(self):
@@ -101,9 +102,9 @@ class PythonEnvironment(object):
         raise NotImplementedError() # pragma: no cover
     def get_python_executable(self):
         raise NotImplementedError() # pragma: no cover
-    def execute_pip_install(self, *args):
+    def execute_pip_install(self, source, reinstall):
         raise NotImplementedError() # pragma: no cover
-    def execute_easy_install(self, *args):
+    def execute_easy_install(self, source, reinstall):
         raise NotImplementedError() # pragma: no cover
     def _execute(self, cmd):
         command.execute_assert_success(cmd, shell=True)
@@ -151,9 +152,9 @@ class Environment(PythonEnvironment):
         self._try_load_installed_signatures()
         virtualenv_api.activate_environment(self._path)
         set_active_environment(self)
-    def execute_pip_install(self, source):
+    def execute_pip_install(self, source, reinstall):
         self._execute("{0} {1}".format(self._get_pip_executable(), source))
-    def execute_easy_install(self, source):
+    def execute_easy_install(self, source, reinstall):
         self._execute("{0} {1}".format(self._get_easy_install_executable(), source))
     def _get_pip_executable(self):
         return os.path.join(self._get_bin_dir(), "pip")
@@ -195,10 +196,10 @@ class GlobalEnvironment(PythonEnvironment):
     _checkout_cache = None
     def create_and_activate(self):
         self._checkout_cache = CheckoutCache(self._get_pydeploy_dir())
-    def execute_easy_install(self, source):
-        return self._execute("easy_install {0}".format(source))
-    def execute_pip_install(self, source):
-        return self._execute("pip install {0}".format(source))
+    def execute_easy_install(self, source, reinstall):
+        return self._execute("easy_install {0} {1}".format("-U" if reinstall else "", source))
+    def execute_pip_install(self, source, reinstall):
+        return self._execute("pip install {0} {1}".format("-U" if reinstall else "", source))
     def get_checkout_cache(self):
         return self._checkout_cache
     def get_python_executable(self):

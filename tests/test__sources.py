@@ -51,10 +51,11 @@ class PathSourceTest(SourceTest):
         self.assertEquals(self.source.checkout(self.env), self.path)
         with self.assertRaises(NotImplementedError):
             self.source.checkout(self.env, '/another/path')
-    def test__install(self):
-        self.env.installer.install_unpacked_package(self.path, self.path)
+    @parameters.toggle('reinstall')
+    def test__install(self, reinstall):
+        self.env.installer.install_unpacked_package(self.path, self.path, reinstall=reinstall)
         self.forge.replay()
-        self.source.install(self.env)
+        self.source.install(self.env, reinstall=reinstall)
 
 class DelegateToPathInstallTest(SourceTest):
     def setUp(self):
@@ -62,10 +63,10 @@ class DelegateToPathInstallTest(SourceTest):
         self.path_class = self.forge.create_class_mock(sources.Path)
         self.orig_path_class = sources.Path
         self.forge.replace_with(sources, "Path", self.path_class)
-    def expect_delegation_to_path_install(self, path, name):
+    def expect_delegation_to_path_install(self, path, name, reinstall):
         path_mock = self.forge.create_mock(self.orig_path_class)
         self.path_class(path, name=name).and_return(path_mock)
-        return path_mock.install(self.env)
+        return path_mock.install(self.env, reinstall=reinstall)
 
 class GitSourceTest(DelegateToPathInstallTest):
     def setUp(self):
@@ -82,13 +83,14 @@ class GitSourceTest(DelegateToPathInstallTest):
         self.assertEquals(repr(self.source), 'Git({})'.format(self.source.get_name()))
     def test__get_signature(self):
         self.assertEquals(self.source.get_signature(), repr(self.source))
-    def test__git_source_install(self):
+    @parameters.toggle('reinstall')
+    def test__git_source_install(self, reinstall):
         self.forge.replace(self.source, "checkout")
         checkout_path = "some/checkout/path"
         self.source.checkout(self.env).and_return(checkout_path)
-        self.expect_delegation_to_path_install(checkout_path, name=self.repo_url)
+        self.expect_delegation_to_path_install(checkout_path, name=self.repo_url, reinstall=reinstall)
         with self.forge.verified_replay_context():
-            self.source.install(self.env)
+            self.source.install(self.env, reinstall=reinstall)
     def test__git_source_checkout_with_path_argument(self):
         checkout_path = "/some/path/to/checkout"
         git.clone_to_or_update(url=self.repo_url, path=checkout_path, branch=self.branch)
@@ -173,22 +175,24 @@ class ExternalToolSourceTest(SourceTest):
         self.package_name = "some_package==1.0.0"
         self.forge.replace(command, "execute_assert_success")
 class PIPSourceTest(ExternalToolSourceTest):
-    def test__install(self):
+    @parameters.toggle('reinstall')
+    def test__install(self, reinstall):
         source = sources.PIP(self.package_name)
-        self.env.execute_pip_install(self.package_name)
+        self.env.execute_pip_install(self.package_name, reinstall=reinstall)
         with self.forge.verified_replay_context():
-            source.install(self.env)
+            source.install(self.env, reinstall=reinstall)
     def test__checkout_not_implemented(self):
         with self.assertRaises(NotImplementedError):
             sources.PIP(self.package_name).checkout(self.env, '/some/path')
         with self.assertRaises(NotImplementedError):
             sources.PIP(self.package_name).checkout(self.env)
 class EasyInstallSourceTest(ExternalToolSourceTest):
-    def test__install(self):
-        self.env.execute_easy_install(self.package_name)
+    @parameters.toggle('reinstall')
+    def test__install(self, reinstall):
+        self.env.execute_easy_install(self.package_name, reinstall=reinstall)
         source = sources.EasyInstall(self.package_name)
         with self.forge.verified_replay_context():
-            source.install(self.env)
+            source.install(self.env, reinstall=reinstall)
     def test__checkout_not_implemented(self):
         with self.assertRaises(NotImplementedError):
             sources.EasyInstall(self.package_name).checkout(self.env, '/some/path')

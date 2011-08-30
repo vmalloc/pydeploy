@@ -1,5 +1,6 @@
 import os
 from pkg_resources import Requirement
+from infi.unittest import parameters
 from .test_cases import ForgeTest
 from tempfile import mkdtemp
 from pydeploy.environment import PythonEnvironment
@@ -16,28 +17,49 @@ class InstallerFrontendTest(ForgeTest):
         self.forge.replace(self.installer, "_get_install_requirements")
         self.path = mkdtemp()
 
-    def test__install_with_pydeploy_setup(self):
-        self._test__install(with_pydeploy_setup=True)
-    def test__install_without_pydeploy_setup(self):
-        self._test__install(with_pydeploy_setup=False)
-
-    def _test__install(self, with_pydeploy_setup):
+    def test__get_installation_context(self):
+        self.assertIsNone(self.installer._context)
+        with self.installer.get_installation_context():
+            self.assertIsNotNone(self.installer._context)
+            self.assertEquals(self.installer._context.installed, set())
+            orig_context = self.installer._context
+            with self.installer.get_installation_context():
+                self.assertIs(self.installer._context, orig_context)
+            self.assertIs(self.installer._context, orig_context)
+        self.assertIsNone(self.installer._context)
+    @parameters.toggle('with_pydeploy_setup', 'reinstall')
+    def test__install(self, with_pydeploy_setup, reinstall):
         name = "some_name"
+        self.forge.replace(self.installer, "_can_install_requirement")
         if with_pydeploy_setup:
             pydeploy_setup_file = os.path.join(self.path, "pydeploy_setup.py")
             with open(pydeploy_setup_file, "w"):
                 pass
             self.env.execute_deployment_file(pydeploy_setup_file)
         deps = [Requirement.parse("dep{}>=2.0.0".format(i)) for i in range(10)]
-        aliased = [deps[2], deps[4]]
+        can_install = [deps[2], deps[4]]
         self.installer._get_install_requirements(self.path, name).and_return(deps)
         for dep in deps:
-            self.env.has_alias(dep).and_return(dep in aliased)
-            if dep in aliased:
-                self.env.install(dep)
+            self.installer._can_install_requirement(dep).and_return(dep in can_install)
+            if dep in can_install:
+                self.env.install(dep, reinstall=reinstall).and_call_with_args(self._assert_marked_as_installed)
         self._expect_installation()
         self.forge.replay()
-        self.installer.install_unpacked_package(self.path, name)
+        with self.installer.get_installation_context():
+            self.installer.install_unpacked_package(self.path, name, reinstall=reinstall)
+    @parameters.toggle('aliased', 'already_installed')
+    def test__can_install_requirement(self, aliased, already_installed):
+        req = Requirement.parse('x>=2.0.0')
+        self.env.has_alias(req).and_return(aliased)
+        self.forge.replay()
+        with self.installer.get_installation_context():
+            if aliased and already_installed:
+                self.installer._context.installed.add(req.unsafe_name)
+            self.assertEquals(aliased and not already_installed,
+                              self.installer._can_install_requirement(req))
+
+    def _assert_marked_as_installed(self, dep, *_, **__):
+        self.assertIn(dep.unsafe_name, self.installer._context.installed)
     def _expect_installation(self):
         return self.env.utils.execute_python_script(
             ["setup.py", "install"],
