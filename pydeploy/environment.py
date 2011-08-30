@@ -37,6 +37,9 @@ class PythonEnvironment(object):
             name = name.unsafe_name
         return name in self._aliases
     def checkout(self, source, *args, **kwargs):
+        """
+        Downloads a package from *source*, and returns the path to which it was extracted.
+        """
         source = self._make_source_object(source)
         _logger.info("Checking out %r (%s)", source.get_name(), type(source).__name__)
         source = self._make_source_object(source)
@@ -87,6 +90,11 @@ class PythonEnvironment(object):
             self._argv = old_argv
 
     def install(self, source, reinstall=True):
+        """
+        Installs a package from *source*.
+
+        @param reinstall: If False, skips installation if this source has already been installed.
+        """
         with self.installer.get_installation_context():
             source = self._make_source_object(source)
             _logger.info("Installing %r (%s)", source.get_name(), type(source).__name__)
