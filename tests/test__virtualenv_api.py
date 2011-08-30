@@ -13,7 +13,7 @@ class VirtualenvAPITest(unittest.TestCase):
         if not os.path.exists(bin_dir):
             os.mkdir(bin_dir)
         activate_this_file = os.path.join(bin_dir, "activate_this.py")
-        with open(activate_this_file, "wb") as activate_file:
+        with open(activate_this_file, "w") as activate_file:
             print("""import {0}
 if __file__ != {1!r}:
     raise Exception('Wrong path')

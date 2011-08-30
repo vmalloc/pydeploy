@@ -7,7 +7,7 @@ class CommandTest(unittest.TestCase):
     def test__command_success(self):
         result, output = command.execute_assert_success("echo hello", shell=True)
         self.assertEquals(result, 0)
-        self.assertEquals(output.rstrip(), "hello")
+        self.assertEquals(output.rstrip().decode('utf-8'), "hello")
     def test__command_no_shell(self):
         with self.assertRaises(command.CommandFailed):
             command.execute_assert_success("echo hello", shell=False)
@@ -27,13 +27,13 @@ class CommandTest(unittest.TestCase):
         self.assertEquals(caught.exception.errno, expected_code)
     def test__command_cwd(self):
         result, output = command.execute_assert_success("pwd", shell=True, cwd="/")
-        self.assertEquals(output.rstrip(), "/")
+        self.assertEquals(output.rstrip(), "/".encode('utf-8'))
         self.assertEquals(result, 0)
     def test__command_failure(self):
         cmd = "echo bla > /dev/stderr; false"
         with self.assertRaises(command.CommandFailed) as caught:
             command.execute_assert_success(cmd, shell=True)
-        self.assertEquals(caught.exception.output.rstrip(), "bla")
+        self.assertEquals(caught.exception.output.rstrip(), "bla".encode('utf-8'))
         self.assertEquals(caught.exception.returncode, 1)
         exception_repr = repr(caught.exception)
         self.assertIn("returncode: 1", exception_repr)

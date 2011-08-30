@@ -1,3 +1,4 @@
+from .python3_compat import basestring
 from .command import execute_assert_success
 
 class EnvironmentUtils(object):

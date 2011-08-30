@@ -2,6 +2,7 @@ import errno
 import logging
 import subprocess
 from .exceptions import CommandFailed
+from .python3_compat import basestring
 
 _logger = logging.getLogger("pydeploy.command")
 
@@ -9,7 +10,7 @@ def execute_assert_success(cmd, shell, cwd=None):
     _logger.debug("Running %r", cmd if isinstance(cmd, basestring) else " ".join(cmd))
     try:
         p = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE, shell=shell, close_fds=True)
-    except OSError, e:
+    except OSError as e:
         if e.errno != errno.ENOENT:
             raise
         raise CommandFailed(cmd, errno.ENOENT, '')

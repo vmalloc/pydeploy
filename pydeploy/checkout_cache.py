@@ -1,6 +1,7 @@
 import os
 from hashlib import sha1
-import os_api
+from . import os_api
+from .python3_compat import make_bytes
 
 _CHECKOUT_CACHE_NAME = ".checkout_cache"
 
@@ -11,4 +12,4 @@ class CheckoutCache(object):
         if not os_api.directory_exists(self._path):
             os_api.makedirs(self._path)
     def get_checkout_path(self, url):
-        return os.path.join(self._path, sha1(url).hexdigest())
+        return os.path.join(self._path, sha1(make_bytes(url)).hexdigest())

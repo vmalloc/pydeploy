@@ -1,6 +1,6 @@
 import os
 import tempfile
-from test_cases import ForgeTest
+from .test_cases import ForgeTest
 from pydeploy import os_api
 from pydeploy.checkout_cache import CheckoutCache
 from pydeploy.checkout_cache import _CHECKOUT_CACHE_NAME

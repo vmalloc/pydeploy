@@ -51,7 +51,7 @@ class Installer(object):
         execute_assert_success("{0} setup.py bdist_egg --dist-dir={1}".format(sys.executable, temp_dir),
                                shell=True, cwd=path)
         [egg_file] = os.listdir(temp_dir)
-        reqs = zipfile.ZipFile(os.path.join(temp_dir, egg_file)).read("EGG-INFO/requires.txt")
+        reqs = zipfile.ZipFile(os.path.join(temp_dir, egg_file)).read("EGG-INFO/requires.txt").decode('utf-8')
         return list(parse_requirements(reqs))
 
 

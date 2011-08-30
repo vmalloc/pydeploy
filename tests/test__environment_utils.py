@@ -1,4 +1,4 @@
-from test_cases import ForgeTest
+from .test_cases import ForgeTest
 from pydeploy.environment import Environment
 from pydeploy import environment_utils
 

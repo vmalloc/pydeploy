@@ -7,4 +7,5 @@ from virtualenv import create_environment
 
 def activate_environment(path):
     activate_script_path = os.path.join(path, "bin", "activate_this.py")
-    execfile(activate_script_path, dict(__file__ = activate_script_path))
+    with open(activate_script_path, "r") as input_file:
+        exec(input_file.read(), dict(__file__ = activate_script_path))

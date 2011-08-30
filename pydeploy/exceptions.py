@@ -1,3 +1,5 @@
+from .python3_compat import make_str
+
 class DeploymentException(Exception):
     pass
 
@@ -11,4 +13,4 @@ class CommandFailed(DeploymentException):
         self.returncode = returncode
         self.output = output
     def __repr__(self):
-        return "CommandFailed:\n  command: {!r}\n  returncode: {}\n  output: {!r})".format(self.cmd, self.returncode, self.output)
+        return "CommandFailed:\n  command: {!r}\n  returncode: {}\n  output: {!r})".format(self.cmd, self.returncode, make_str(self.output))

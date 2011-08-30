@@ -1,12 +1,12 @@
 from hashlib import sha512
-import cPickle as pickle
+from .python3_compat import urlparse, make_bytes, basestring
+import pickle
 import os
 import sys
 import logging
 import pkg_resources
 import subprocess
 from contextlib import contextmanager
-from urlparse import urlparse
 from . import command
 from . import os_api
 from . import virtualenv_api
@@ -50,7 +50,7 @@ class PythonEnvironment(object):
         executed = False
         if path_or_url not in self._executed_deployment_file_locations:
             content = self._get_deployment_file_content(path_or_url)
-            content_hash = sha512(content).digest()
+            content_hash = sha512(make_bytes(content)).digest()
             if content_hash not in self._executed_deployment_file_hashes:
                 self.execute_deployment_string(content)
                 self._executed_deployment_file_hashes.add(content_hash)
@@ -67,7 +67,7 @@ class PythonEnvironment(object):
         return self.execute_deployment_string(fileobj.read(), filename=filename)
     def execute_deployment_string(self, content, filename=None):
         executed_locals = self._get_config_file_locals(filename)
-        exec content in executed_locals
+        exec(content, executed_locals)
     def execute_deployment_file_path(self, path):
         _logger.info("Executing deployment file %r...", path)
         with open(path, "rb") as fileobj:

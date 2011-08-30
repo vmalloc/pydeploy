@@ -2,6 +2,7 @@ import os
 import logging
 from .scm import git
 from . import exceptions
+from .python3_compat import basestring
 from pkg_resources import parse_version
 
 _all_exposed_sources = {}

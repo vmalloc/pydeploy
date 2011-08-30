@@ -1,5 +1,5 @@
 import tempfile
-from test_cases import ForgeTest
+from .test_cases import ForgeTest
 from pydeploy.scm import git
 from pydeploy import command
 

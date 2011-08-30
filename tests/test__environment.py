@@ -5,7 +5,7 @@ import tempfile
 from infi.unittest import parameters
 from pkg_resources import Requirement
 import forge
-from test_cases import ForgeTest
+from .test_cases import ForgeTest
 from pydeploy import environment
 from pydeploy import os_api
 from pydeploy import virtualenv_api

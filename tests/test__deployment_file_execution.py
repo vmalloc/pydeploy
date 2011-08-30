@@ -1,11 +1,11 @@
 import itertools
 import os
 import sys
-import urllib2
-from cStringIO import StringIO
+from pydeploy.python3_compat import urlopen
+from pydeploy.python3_compat import BytesIO, make_bytes
 from tempfile import mkdtemp
 from tempfile import gettempdir
-from test_cases import ForgeTest
+from .test_cases import ForgeTest
 from pydeploy import os_api
 from pydeploy.environment import Environment
 from infi.unittest import parameters
@@ -19,7 +19,7 @@ env.__test__.__success__ = True"""
         self.env.__test__ = self
         self.assertFalse(hasattr(self, "__success__"))
         # we rely on it throwing exceptions if errors occur...
-        self.assertIs(os_api.urlopen, urllib2.urlopen)
+        self.assertIs(os_api.urlopen, urlopen)
         self.forge.replace(os_api, "urlopen")
         self._orig_stdin = sys.stdin
     def tearDown(self):
@@ -46,7 +46,7 @@ env.__test__.__success__ = True"""
         self._test__execute_url(direct=False)
     def _test__execute_url(self, direct):
         url = "http://some.url.com/bla"
-        os_api.urlopen(url).and_return(StringIO(self._DEPLOYMENT_SCRIPT))
+        os_api.urlopen(url).and_return(BytesIO(make_bytes(self._DEPLOYMENT_SCRIPT)))
         self.forge.replay()
         if direct:
             self.env.execute_deployment_file_url(url)
@@ -54,16 +54,16 @@ env.__test__.__success__ = True"""
             self.env.execute_deployment_file(url)
         self.assertSuccess()
     def test__execute_stdin(self):
-        sys.stdin = StringIO(self._DEPLOYMENT_SCRIPT)
+        sys.stdin = BytesIO(make_bytes(self._DEPLOYMENT_SCRIPT))
         self.env.execute_deployment_stdin()
         self.assertSuccess()
     @parameters.toggle('is_url', 'same_arg', 'same_content')
     def test__execute_once(self, is_url, same_arg, same_content):
         if is_url:
             arg = "http://a"
-            os_api.urlopen(arg).and_return(StringIO(self._DEPLOYMENT_SCRIPT))
+            os_api.urlopen(arg).and_return(BytesIO(make_bytes(self._DEPLOYMENT_SCRIPT)))
             if not same_arg:
-                os_api.urlopen(arg + 'x').and_return(StringIO(self._DEPLOYMENT_SCRIPT if same_content else self._DEPLOYMENT_SCRIPT + ' '))
+                os_api.urlopen(arg + 'x').and_return(BytesIO(make_bytes(self._DEPLOYMENT_SCRIPT if same_content else self._DEPLOYMENT_SCRIPT + ' ')))
         else:
             arg = os.path.join(mkdtemp(), "file.py")
             with open(arg, "w") as outfile:

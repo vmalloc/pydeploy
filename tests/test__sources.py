@@ -2,7 +2,7 @@ import os
 import tempfile
 from pkg_resources import Requirement
 from infi.unittest import parameters
-from test_cases import ForgeTest
+from .test_cases import ForgeTest
 from pydeploy.environment import Environment
 from pydeploy.environment_utils import EnvironmentUtils
 from pydeploy.checkout_cache import CheckoutCache
