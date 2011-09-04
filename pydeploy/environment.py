@@ -161,7 +161,7 @@ class Environment(PythonEnvironment):
         virtualenv_api.activate_environment(self._path)
         set_active_environment(self)
     def execute_pip_install(self, source, reinstall):
-        self._execute("{0} {1}".format(self._get_pip_executable(), source))
+        self._execute("{0} install {1}".format(self._get_pip_executable(), source))
     def execute_easy_install(self, source, reinstall):
         self._execute("{0} {1}".format(self._get_easy_install_executable(), source))
     def _get_pip_executable(self):
