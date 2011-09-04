@@ -7,6 +7,7 @@ from pydeploy.environment import PythonEnvironment
 from pydeploy.environment_utils import EnvironmentUtils
 from pydeploy.installer import Installer
 from pydeploy.sources import Source
+from .test_utils import create_installable_package
 
 class InstallerFrontendTest(ForgeTest):
     def setUp(self):
@@ -75,8 +76,7 @@ class InstallerRequirementsTest(ForgeTest):
         name = "some_name"
         package_container = mkdtemp()
         reqs = ["dep{}>=2.0.0".format(i) for i in range(10)]
-        with open(os.path.join(package_container, "setup.py"), "w") as setup_file:
-            setup_file.write(_SETUP_FILE_SKELETON.format(reqs=reqs))
+        create_installable_package(package_container, reqs=reqs)
         self.forge.replay()
         parsed_reqs = self.installer._get_install_requirements(package_container, name=name)
         for parsed_requirement, dep in zip(parsed_reqs, reqs):
@@ -84,12 +84,3 @@ class InstallerRequirementsTest(ForgeTest):
             self.assertEquals(parsed_requirement.project_name, dep.split(">=")[0])
 
 
-_SETUP_FILE_SKELETON = """\
-from setuptools import setup, find_packages
-
-setup(name="somepkg",
-      version="0.0.1",
-      packages=find_packages(),
-      install_requires={reqs},
-      )
-"""
