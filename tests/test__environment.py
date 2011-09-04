@@ -44,6 +44,7 @@ class GetActiveEnvironmentTest(EnvironmentTest):
     def test__create_and_activate_frontend(self):
         create_environment_stub = self.forge.replace(virtualenv_api, "create_environment")
         e = self.forge.create_hybrid_mock(environment.Environment)
+        e._states = []
         e.__forge__.enable_setattr_during_replay()
         e._path = path = os.path.join(tempfile.mkdtemp(), "some", "path")
         create_environment_stub(e._path)
@@ -53,6 +54,7 @@ class GetActiveEnvironmentTest(EnvironmentTest):
         virtualenv_api.activate_environment(path).and_call(_assert_no_active_environment)
         with self.forge.verified_replay_context():
             e.create_and_activate()
+            self.addCleanup(e.deactivate)
             self.assertIs(get_active_envrionment(), e)
 
 class EnvironmentWithLocalPathTest(EnvironmentTest):
@@ -103,6 +105,7 @@ class ActivatedEnvironmentTest(EnvironmentWithLocalPathTest):
     def setUp(self):
         super(ActivatedEnvironmentTest, self).setUp()
         self.env.create_and_activate()
+        self.addCleanup(self.env.deactivate)
         self.assertEquals(self.activated_count, 1)
 
 class AliasTest(ActivatedEnvironmentTest):
@@ -164,7 +167,7 @@ class InstallCheckoutTest(ActivatedEnvironmentTest):
             self._assert_env_is_not_in_installation_context()
             self.assertEquals(self.activated_count, 1)
             result = self.env.install(self.source, reinstall=reinstall)
-            self.assertEquals(self.activated_count, 2)
+            self.assertEquals(self.activated_count, 1)
         self.assertIs(result, expected_result)
     @parameters.toggle('with_arg')
     def test__main_checkout_sequence(self, with_arg):
@@ -190,12 +193,13 @@ class InstallCheckoutTest(ActivatedEnvironmentTest):
         self.assertFalse(self.installed)
         for i in range(3): #only first time should matter
             self.env.install(src, reinstall=False)
-            self.assertEquals(self.activated_count, 2)
+            self.assertEquals(self.activated_count, 1)
             self.assertTrue(self.installed)
         # even if the environment is reinitialized, nothing should happen
         second_env = environment.Environment(self.path)
         second_env.create_and_activate()
-        self.assertEquals(self.activated_count, 3)
+        self.addCleanup(second_env.deactivate)
+        self.assertEquals(self.activated_count, 2)
         self.env.install(src, reinstall=False)
-        self.assertEquals(self.activated_count, 3)
+        self.assertEquals(self.activated_count, 2)
 

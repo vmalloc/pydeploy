@@ -1,10 +1,12 @@
 from hashlib import sha512
 from .python3_compat import urlparse, make_bytes, basestring
+import distutils.sysconfig
 import pickle
 import os
 import sys
 import logging
 import pkg_resources
+import site
 import subprocess
 from contextlib import contextmanager
 from . import command
@@ -150,16 +152,42 @@ class Environment(PythonEnvironment):
         super(Environment, self).__init__(argv)
         self._path = os.path.abspath(path)
         self._checkout_cache = None
+        self._states = []
     def get_path(self):
         return self._path
     def get_checkout_cache(self):
         return self._checkout_cache
     def create_and_activate(self):
+        self._push_python_state()
         virtualenv_api.create_environment(self._path)
         self._checkout_cache = CheckoutCache(self._path)
         self._try_load_installed_signatures()
         virtualenv_api.activate_environment(self._path)
         set_active_environment(self)
+    def deactivate(self):
+        self._pop_python_state()
+    def _push_python_state(self):
+        state = dict(
+            prefix = sys.prefix,
+            path   = sys.path[:],
+            modules = sys.modules.copy(),
+            active_environment = get_active_envrionment(),
+            )
+        if hasattr(sys, 'old_prefix'):
+            state['old_prefix'] = sys.old_prefix
+        self._states.append(state)
+    def _pop_python_state(self):
+        state = self._states.pop(-1)
+        if 'old_prefix' in state:
+            sys.old_prefix = state.pop('old_prefix')
+        elif hasattr(sys, "old_prefix"):
+            del sys.old_prefix
+        sys.prefix     = state.pop('prefix')
+        set_active_environment(state.pop('active_environment'))
+        sys.modules.clear()
+        sys.modules.update(state.pop('modules'))
+        sys.path[:] = state.pop('path')
+        assert not state
     def execute_pip_install(self, source, reinstall):
         self._execute("{0} install {1}".format(self._get_pip_executable(), source))
     def execute_easy_install(self, source, reinstall):
@@ -174,8 +202,13 @@ class Environment(PythonEnvironment):
         return os.path.join(self._path, "bin")
     #installation
     def _post_install(self, source):
-        virtualenv_api.activate_environment(self._path)
+        site.addsitedir(self._get_site_dir())
         self._mark_installed(source)
+    def _get_site_dir(self):
+        # taken from virtualenv's activate_this.py...
+        if sys.platform == 'win32':
+            return os.path.join(self._path, 'Lib', 'site-packages')
+        return os.path.join(self._path, 'lib', 'python%s' % sys.version[:3], 'site-packages')
     #signatures
     def _is_already_installed(self, source):
         return source.get_signature() in self._installed
@@ -212,12 +245,12 @@ class GlobalEnvironment(PythonEnvironment):
         return self._checkout_cache
     def get_python_executable(self):
         return sys.executable
-    def _post_install(self, source):
-        pass
     def _is_already_installed(self, source):
         return False # let easy_install take care of it for now
     def _get_pydeploy_dir(self):
         return os.path.expanduser("~/.pydeploy")
+    def _post_install(self, source):
+        site.addsitedir(distutils.sysconfig.get_python_lib())
 
 _active_environment = None
 
