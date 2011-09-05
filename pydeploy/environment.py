@@ -1,5 +1,6 @@
 from hashlib import sha512
 from .python3_compat import urlparse, make_bytes, basestring
+import ast
 import distutils.sysconfig
 import pickle
 import os
@@ -117,7 +118,7 @@ class PythonEnvironment(object):
     def execute_easy_install(self, source, reinstall):
         raise NotImplementedError() # pragma: no cover
     def _execute(self, cmd):
-        command.execute_assert_success(cmd, shell=True)
+        return command.execute_assert_success(cmd, shell=True)
     def _get_config_file_locals(self, filename):
         returned = dict(
             env = self,
@@ -145,7 +146,15 @@ class PythonEnvironment(object):
         source = Source.from_anything(source)
         return source
     def _post_install(self, source):
-        raise NotImplementedError() # pragma: no cover
+        self._fix_sys_path()
+    def _fix_sys_path(self):
+        new_sys_path = self._get_new_sys_path()
+        for new_path in set(new_sys_path) - set(sys.path):
+            sys.path.insert(0, new_path)
+            pkg_resources.fixup_namespace_packages(new_path)
+    def _get_new_sys_path(self):
+        result, output = self._execute("{} -c 'import sys;print sys.path'".format(self.get_python_executable()))
+        return ast.literal_eval(output)
 
 class Environment(PythonEnvironment):
     def __init__(self, path, argv=()):
@@ -162,8 +171,10 @@ class Environment(PythonEnvironment):
         virtualenv_api.create_environment(self._path)
         self._checkout_cache = CheckoutCache(self._path)
         self._try_load_installed_signatures()
-        virtualenv_api.activate_environment(self._path)
+        self._activate()
         set_active_environment(self)
+    def _activate(self):
+        virtualenv_api.activate_environment(self._path)
     def deactivate(self):
         self._pop_python_state()
     def _push_python_state(self):
@@ -202,7 +213,7 @@ class Environment(PythonEnvironment):
         return os.path.join(self._path, "bin")
     #installation
     def _post_install(self, source):
-        site.addsitedir(self._get_site_dir())
+        super(Environment, self)._post_install(source)
         self._mark_installed(source)
     def _get_site_dir(self):
         # taken from virtualenv's activate_this.py...
@@ -249,8 +260,6 @@ class GlobalEnvironment(PythonEnvironment):
         return False # let easy_install take care of it for now
     def _get_pydeploy_dir(self):
         return os.path.expanduser("~/.pydeploy")
-    def _post_install(self, source):
-        site.addsitedir(distutils.sysconfig.get_python_lib())
 
 _active_environment = None
 

@@ -66,6 +66,7 @@ class EnvironmentWithLocalPathTest(EnvironmentTest):
         self.forge.replace_with(virtualenv_api, "activate_environment", self._activate)
         self.activated_count = 0
         self.env = environment.Environment(self.path, self.argv)
+        self.forge.replace(self.env, "_fix_sys_path")
         self.assertEquals(self.activated_count, 0)
     def _create(self, path):
         if not os.path.isdir(path):
@@ -119,12 +120,14 @@ class AliasTest(ActivatedEnvironmentTest):
     def test__installing_from_string(self, reinstall):
         self.env.add_alias(self.nickname, self.source)
         self.source.install(self.env, reinstall=reinstall)
+        self.env._fix_sys_path()
         self.forge.replay()
         self.env.install(self.nickname, reinstall=reinstall)
     @parameters.toggle('reinstall')
     def test__installing_from_requirement_no_constraint(self, reinstall):
         self.env.add_alias(self.nickname, self.source)
         self.source.install(self.env, reinstall=reinstall)
+        self.env._fix_sys_path()
         self.forge.replay()
         self.env.install(Requirement.parse(self.nickname), reinstall=reinstall)
     @parameters.toggle('reinstall')
@@ -136,6 +139,7 @@ class AliasTest(ActivatedEnvironmentTest):
         source = Requirement.parse("bla>=2.0.0")
         self.source.resolve_constraints([(">=", "2.0.0")]).and_return(real_source)
         real_source.install(self.env, reinstall=reinstall)
+        self.env._fix_sys_path()
         self.forge.replay()
         self.env.install(source, reinstall=reinstall)
     def test__has_alias(self):
@@ -162,7 +166,7 @@ class InstallCheckoutTest(ActivatedEnvironmentTest):
         self.source.install(self.env, reinstall=reinstall).\
                                       and_call(self._assert_env_is_in_installation_context).\
                                       and_return(expected_result)
-
+        self.env._fix_sys_path()
         with self.forge.verified_replay_context():
             self._assert_env_is_not_in_installation_context()
             self.assertEquals(self.activated_count, 1)
@@ -181,6 +185,8 @@ class InstallCheckoutTest(ActivatedEnvironmentTest):
             result = self.env.checkout(self.source, *([arg] if with_arg else ()))
         self.assertIs(expected_result, result)
     def test__installed_signatures(self):
+        self.env._fix_sys_path()
+        self.forge.replay()
         self.installed = False
         class MySource(Path):
             def install(self_, env, reinstall):

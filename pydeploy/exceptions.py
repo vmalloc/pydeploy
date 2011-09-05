@@ -14,3 +14,5 @@ class CommandFailed(DeploymentException):
         self.output = output
     def __repr__(self):
         return "CommandFailed:\n  command: {!r}\n  returncode: {}\n  output: {!r})".format(self.cmd, self.returncode, make_str(self.output))
+    def __str__(self):
+        return repr(self)
