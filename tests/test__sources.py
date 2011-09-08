@@ -74,7 +74,7 @@ class GitSourceTest(DelegateToPathInstallTest):
         self.repo_url = "some/repo/url"
         self.branch = 'some_branch'
         self.source = sources.Git(self.repo_url, self.branch)
-        self.forge.replace(git, "clone_to_or_update")
+        self.forge.replace_many(git, "clone_to_or_update", "reset_submodules")
     def test__master_is_default_branch(self):
         self.assertEquals(sources.Git('bla')._branch, 'master')
     def test__get_name(self):
@@ -94,6 +94,7 @@ class GitSourceTest(DelegateToPathInstallTest):
     def test__git_source_checkout_with_path_argument(self):
         checkout_path = "/some/path/to/checkout"
         git.clone_to_or_update(url=self.repo_url, path=checkout_path, branch=self.branch)
+        git.reset_submodules(checkout_path)
 
         with self.forge.verified_replay_context():
             result = self.source.checkout(self.env, checkout_path)
@@ -104,7 +105,7 @@ class GitSourceTest(DelegateToPathInstallTest):
         self.env.get_checkout_cache().and_return(checkout_cache)
         checkout_cache.get_checkout_path(self.repo_url).and_return(checkout_path)
         git.clone_to_or_update(url=self.repo_url, branch=self.branch, path=checkout_path)
-
+        git.reset_submodules(checkout_path)
         with self.forge.verified_replay_context():
             result = self.source.checkout(self.env)
         self.assertIs(result, checkout_path)

@@ -14,6 +14,9 @@ def update(url, branch, path):
 def clone_to(url, branch, path):
     command.execute_assert_success("git clone -b {0} {1} {2}".format(branch, url, path), shell=True)
 
+def reset_submodules(path):
+    command.execute_assert_success("git submodule update --init", cwd=path, shell=True)
+
 class Ref(str):
     def to_ref_name(self):
         return str(self)

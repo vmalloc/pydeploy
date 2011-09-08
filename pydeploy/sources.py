@@ -87,6 +87,7 @@ class Git(SCMSource):
         if path is None:
             path = env.get_checkout_cache().get_checkout_path(self._url)
         git.clone_to_or_update(self._url, branch=self._branch, path=path)
+        git.reset_submodules(path=path)
         return path
     @classmethod
     def get_prefix(cls):
